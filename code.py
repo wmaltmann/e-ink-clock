@@ -1,4 +1,4 @@
 import sys
-sys.path.append("/src")  # Add src directory to module search path
+sys.path.append("/src")
 
-import app  # Runs app.py from src/
+import app
