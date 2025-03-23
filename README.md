@@ -1,7 +1,9 @@
 # e-ink-clock
 
-## e-ink display docs
-- https://www.waveshare.com/wiki/Pico-ePaper-2.9
+## Docs
+- Circuit Python: https://circuitpython.org/board/raspberry_pi_pico2_w/
+- Circuit Python Lib: https://github.com/adafruit/Adafruit_CircuitPython_Bundle/releases
+- E-Ink: https://www.waveshare.com/wiki/Pico-ePaper-2.9
 
 ## sync from local to device
 ```powershell
