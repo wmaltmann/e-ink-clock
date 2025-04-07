@@ -1,6 +1,6 @@
 # config.py
 
-def read_config():
+def load_config():
     try:
         with open(".config", "r") as f:
             config = {}
