@@ -1,41 +1,54 @@
-# import wifi
-# import time
-# import socketpool
-# import rtc
-# import adafruit_ntp
-# from utils.config import read_config
+import network
+import ntptime
+import time
+import machine
+from utils.config import load_config
 
-# # Read Wi-Fi credentials from the config file
-# config = read_config()
+def connect_wifi(ssid, password):
+    wlan = network.WLAN(network.STA_IF)
+    wlan.active(True)
+    wlan.connect(ssid, password)
+    
+    while not wlan.isconnected():
+        time.sleep(1)
+    
+    print('Connected to Wi-Fi')
+    print('Network config:', wlan.ifconfig())
 
-# SSID = config.get("SSID")
-# PASSWORD = config.get("PASSWORD")
+# Function to set system time using NTP
+def set_time():
+    try:
+        ntptime.settime()  # Sync system time with NTP server
+        print('Time synchronized with NTP')
+    except Exception as e:
+        print('Failed to sync time with NTP:', e)
 
+# Function to print current time every second
+def print_time():
+    while True:
+        rtc = machine.RTC()
+        current_time = rtc.datetime()  # Get current date and time
+        print(f'Time: {current_time[4]}:{current_time[5]}:{current_time[6]}')  # Print hours:minutes:seconds
+        time.sleep(1)
 
-# # Connect to Wi-Fi
-# print("Connecting to Wi-Fi...")
-# wifi.radio.connect(SSID, PASSWORD)
+# Load Wi-Fi credentials from the config file
+config = load_config()
 
-# # Check if connected
-# if wifi.radio.ipv4_address:
-#     print(f"Connected to Wi-Fi. IP address: {wifi.radio.ipv4_address}")
-# else:
-#     print("Failed to connect to Wi-Fi.")
+# Check if config was successfully loaded and if SSID/PASSWORD are available
+if config:
+    SSID = config.get("SSID")
+    PASSWORD = config.get("PASSWORD")
 
-# # Create a socket pool
-# pool = socketpool.SocketPool(wifi.radio)
+    if SSID and PASSWORD:
+        connect_wifi(SSID, PASSWORD)
+        set_time()
 
-# # Set up NTP client
-# ntp = adafruit_ntp.NTP(pool, server="pool.ntp.org", tz_offset=0)  # Set tz_offset as needed
+        # Disable Wi-Fi to save power
+        network.WLAN(network.STA_IF).active(False)
 
-# # Set the RTC (Real-Time Clock) to NTP time
-# rtc.RTC().datetime = ntp.datetime
-# print("Time synchronized to NTP:", time.localtime())
-
-# # Print time every minute
-# while True:
-#     current_time = time.localtime()
-#     formatted_time = f"{current_time.tm_year:04d}-{current_time.tm_mon:02d}-{current_time.tm_mday:02d}---{current_time.tm_hour:02d}:{current_time.tm_min:02d}:{current_time.tm_sec:02d}"
-#     print("Current Time:", formatted_time)
-
-#     time.sleep(60)  # Wait for a minute before printing again
+        # Start printing time
+        print_time()
+    else:
+        print("Error: SSID and/or PASSWORD missing in config file.")
+else:
+    print("Error: Could not load config file.")

@@ -298,6 +298,4 @@ class EPD(framebuf.FrameBuffer):
     def sleep(self):
         self.send_command(0x10) # DEEP_SLEEP_MODE
         self.send_data(0x01)
-        
-        self.delay_ms(2000)
         self.module_exit()
