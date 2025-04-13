@@ -226,13 +226,15 @@ class EPD(framebuf.FrameBuffer):
         return 0
 
     def display(self, image):
-        if (image == None):
-            return            
-        self.send_command(0x24) # WRITE_RAM
-        for j in range(int(self.width / 8) - 1, -1, -1):
-            for i in range(0, self.height):
-                self.send_data(image[i + j * self.height])   
+        if image is None:
+            return
+        self.send_command(0x24)  # WRITE_RAM
+        for j in range(0, int(self.width / 8)):  # reversed horizontal bytes
+            for i in range(self.height - 1, -1, -1):  # reversed vertical
+                index = (self.height - 1 - i) + (int(self.width / 8) - 1 - j) * self.height
+                self.send_data(image[index])
         self.TurnOnDisplay()
+
 
     def display_Base(self, image):
         if (image == None):

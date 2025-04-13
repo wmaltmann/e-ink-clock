@@ -1,4 +1,4 @@
 import sys
 sys.path.append("/src")
 
-import clock
+import rtc
