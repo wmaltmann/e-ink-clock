@@ -44,6 +44,7 @@ FILENAME = "/sd/Glitterati Melody Alarm.wav"
 #FILENAME = "src/Glitterati Melody Alarm.wav"
 CHUNK_SIZE = 90000  # Bytes per write
 
+
 try:
     with open(FILENAME, "rb") as f:
         # Skip WAV header (usually 44 bytes)

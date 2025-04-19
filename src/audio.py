@@ -1,5 +1,6 @@
 from machine import Pin, I2S, PWM
 import os
+import time
 
 # Define I2S pins
 SCK_PIN = 1   # BCLK
@@ -33,7 +34,7 @@ audio = I2S(
 # WAV file playback
 FILENAME = "src/Glitterati Melody Alarm.wav"
 #FILENAME = "src/side-to-side-8k-16bits-stereo.wav"
-CHUNK_SIZE = 4144  # Bytes per write
+CHUNK_SIZE = 1024 # Bytes per write
 
 try:
     with open(FILENAME, "rb") as f:
@@ -47,7 +48,7 @@ try:
             if not wav_data:
                 break
             audio.write(wav_data)
-
+            time.sleep_ms(1)
 
 except KeyboardInterrupt:
     pass

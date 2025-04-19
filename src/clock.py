@@ -13,4 +13,4 @@ while True:
     epd.text(str(count), 0, 0, 0x00)
     epd.display_Partial(epd.buffer)
     count += 1
-    time.sleep(10)
+    time.sleep(2)
