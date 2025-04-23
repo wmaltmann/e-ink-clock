@@ -1,4 +1,4 @@
 import sys
 sys.path.append("/lib")
 
-print("Main")
+import e_ink_clock
