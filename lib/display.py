@@ -8,7 +8,7 @@ class Display:
         self.second = second
         self.am_pm = am_pm
         self.epd = EPD()
-        #self._initialize_display()
+        self._initialize_display()
 
     def update_time(self, time: DateTime):
         self.hour = time.hour
@@ -18,6 +18,8 @@ class Display:
         self._update_display()
 
     def _update_display(self):
+        self.epd.reset()
+        self.epd.init()
         self._initialize_display()
         time_sting = f"{self.hour:02d}:{self.minute:02d} {self.am_pm}"
         self.epd.fill_rect(20,60,256,8, 0Xff)
