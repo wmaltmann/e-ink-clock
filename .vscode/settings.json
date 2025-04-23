@@ -1,16 +1,15 @@
 {
     "python.languageServer": "Pylance",
-    "python.analysis.typeCheckingMode": "basic",
     "python.analysis.diagnosticSeverityOverrides": {
-        "reportMissingModuleSource": "none"
+        "reportMissingModuleSource": "none",
+        "reportShadowedImports": "none"
     },
-    "python.terminal.activateEnvironment": false,
-    "micropico.openOnStart": true,
-    "python.analysis.typeshedPaths": [
-        "~/.micropico-stubs/included"
-    ],
     "python.analysis.extraPaths": [
-        "~/.micropico-stubs/included",
-        "./src"
-    ]
+        "c:\\Users\\cente\\.vscode\\extensions\\wmerkens.vscode-circuitpython-v2-0.3.3\\boards\\0x239A\\0x8162",
+        "c:\\Users\\cente\\.vscode\\extensions\\wmerkens.vscode-circuitpython-v2-0.3.3\\stubs",
+        "c:\\Users\\cente\\AppData\\Roaming\\Code\\User\\globalStorage\\wmerkens.vscode-circuitpython-v2\\bundle\\20250422\\adafruit-circuitpython-bundle-py-20250422\\lib"
+    ],
+    "circuitpython.board.version": "9.2.7",
+    "circuitpython.board.vid": "0x239A",
+    "circuitpython.board.pid": "0x8162"
 }
