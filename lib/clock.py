@@ -5,8 +5,8 @@ from lib.wifi import Wifi
 from lib.datetime import DateTime
 
 DS3231_I2C_ADDR = 0x68
-TIMEZONE_OFFSET = -6 * 3600  # CST: UTC-6
-#TIMEZONE_OFFSET = -5 * 3600  # CDT: UTC-5
+#TIMEZONE_OFFSET = -6 * 3600  # CST: UTC-6
+TIMEZONE_OFFSET = -5 * 3600  # CDT: UTC-5
 
 def bcd2dec(bcd):
     return (bcd // 16) * 10 + (bcd % 16)
@@ -25,7 +25,8 @@ class Clock:
             t = time.localtime(time.time() + TIMEZONE_OFFSET)
             return DateTime(t[0], t[1], t[2], t[3], t[4], t[5], t[6])
         else:
-            return self._get_rtc_time()
+            t = self._get_rtc_time()
+            return DateTime(t[0], t[1], t[2], t[3], t[4], t[5], t[6])
 
     def get_time_source(self):
             return self.time_source_sys
@@ -40,15 +41,20 @@ class Clock:
         month = bcd2dec(data[5] & 0x1F)
         year = bcd2dec(data[6]) + 2000
 
-        # Convert RTC time to seconds since epoch
-        utc_tuple = (year, month, day, hour, minute, second, 0, 0)
-        epoch_seconds = time.mktime(utc_tuple)
+        # Manual offset calculation
+        total_seconds = hour * 3600 + minute * 60 + second + TIMEZONE_OFFSET
+        if total_seconds < 0 or total_seconds >= 86400:
+            # Handle overflow with time.mktime and time.localtime
+            from_timestamp = time.mktime((year, month, day, hour, minute, second, 0, 0))
+            adjusted = time.localtime(from_timestamp + TIMEZONE_OFFSET)
+            return adjusted
+        else:
+            # Adjust time fields manually
+            hour = total_seconds // 3600
+            minute = (total_seconds % 3600) // 60
+            second = total_seconds % 60
+            return (year, month, day, int(hour), int(minute), int(second), weekday, 0)
 
-        # Apply timezone offset
-        local_time = time.localtime(epoch_seconds + TIMEZONE_OFFSET)
-
-        return DateTime(local_time[0], local_time[1], local_time[2],
-                        local_time[3], local_time[4], local_time[5], local_time[6])
 
     def _set_rtc_time(self,year, month, day, weekday, hour, minute, second):
         data = bytearray([
@@ -65,17 +71,23 @@ class Clock:
     def set_time_from_ntp(self):
         if self.WIFI.connect():
             try:
-                ntptime.settime()
+                ntptime.settime()  # Sets system time in UTC
                 print('Time synchronized with NTP')
-                now = time.localtime()
-                year, month, day, weekday, hour, minute, second, _ = now
-                self._set_rtc_time(year, month, day, weekday, hour, minute, second)
+
+                # Get UTC time to write to RTC
+                now = time.gmtime()
+                year, month, day, hour, minute, second, weekday, _ = now
+
+                # weekday returned by gmtime is 0=Monday, DS3231 uses 1=Sunday
+                ds3231_weekday = (weekday + 1) % 7 or 7
+
+                self._set_rtc_time(year, month, day, ds3231_weekday, hour, minute, second)
                 self.time_source_sys = True
                 print("RTC time set from NTP")
-                print('Time synchronized with NTP')
                 self.WIFI.disconnect()
             except Exception as e:
                 print('Failed to sync time with NTP:', e)
                 self.time_source_sys = False
                 self.WIFI.disconnect()
+
         

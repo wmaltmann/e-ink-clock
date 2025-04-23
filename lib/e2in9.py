@@ -141,10 +141,8 @@ class EPD(framebuf.FrameBuffer):
         self.digital_write(self.cs_pin, 1)
         
     def ReadBusy(self):
-        print("e-Paper busy")
         while(self.digital_read(self.busy_pin) == 1):      #  0: idle, 1: busy
             self.delay_ms(10) 
-        print("e-Paper busy release")  
 
     def TurnOnDisplay(self):
         self.send_command(0x22) # DISPLAY_UPDATE_CONTROL_2
@@ -251,10 +249,9 @@ class EPD(framebuf.FrameBuffer):
                 
         self.TurnOnDisplay()
 
-    def display_Partial(self, image):
-        if (image == None):
-            return
-            
+    def display_Partial(self):
+        image = self.buffer
+
         self.digital_write(self.reset_pin, 0)
         self.delay_ms(2)
         self.digital_write(self.reset_pin, 1)
@@ -301,3 +298,6 @@ class EPD(framebuf.FrameBuffer):
         self.send_command(0x10) # DEEP_SLEEP_MODE
         self.send_data(0x01)
         self.module_exit()
+
+
+

@@ -1,22 +1,19 @@
-import sys
 import time
 import uasyncio as asyncio
 from lib.config import Config
 from lib.wifi import Wifi
 from lib.clock  import Clock
+from lib.display import Display
 
 CONFIG = Config()
+DISPLAY = Display()
 WIFI = Wifi(CONFIG)
 CLOCK = Clock(WIFI)
-print(CLOCK.get_time(),"From system?", CLOCK.get_time_source())
 
 async def clock_task():
     while True:
-        # now = time.localtime()
-        # seconds_until_next_minute = 60 - now[5]
-        # await asyncio.sleep(seconds_until_next_minute + 0.1)
-        print(CLOCK.get_time(),"From system?", CLOCK.get_time_source())
-        await asyncio.sleep(5)
+        DISPLAY.update_time(CLOCK.get_time())
+        await asyncio.sleep(60)
 
 async def main():
     print("Initializing")
