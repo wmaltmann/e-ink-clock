@@ -31,3 +31,11 @@ class Display:
         self.epd.Clear(0xff)
         self.epd.fill(0xff)
         self.epd.display(self.epd.buffer)
+
+    def line(self):
+        self.epd.reset()
+        self.epd.init()
+        self._initialize_display()
+        self.epd.fill_rect(0,0,10,10, 0x00)
+        self.epd.display_Partial()
+        self.epd.sleep()
