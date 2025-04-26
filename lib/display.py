@@ -1,5 +1,6 @@
 from lib.datetime import DateTime
 from lib.e2in9 import EPD
+from lib.time_font import overlay_bit_image
 
 class Display:
     def __init__(self, hour: int = 0, minute: int = 0, second: int = 0, am_pm ="xx"):
@@ -31,3 +32,8 @@ class Display:
         self.epd.Clear(0xff)
         self.epd.fill(0xff)
         self.epd.display(self.epd.buffer)
+
+    def display(self):
+        overlay_bit_image(self.epd, 0, 0, 60, 80)
+        self.epd.display(self.epd.buffer)
+        self.epd.sleep()

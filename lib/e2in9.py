@@ -76,6 +76,17 @@ Gray4 = [
 0x22,	0x17,	0x41,	0xAE,	0x32,	0x28		
 ]	
 
+def reverse_bits(b):
+    r = 0
+    for i in range(8):
+        r = (r << 1) | (b & 1)
+        b >>= 1
+    return r
+
+BIT_REVERSE_TABLE = [reverse_bits(i) for i in range(256)]
+
+def flip_byte(byte):
+    return BIT_REVERSE_TABLE[byte]    
 
 class EPD(framebuf.FrameBuffer):
     def __init__(self):
@@ -194,8 +205,7 @@ class EPD(framebuf.FrameBuffer):
         self.send_data((y >> 8) & 0xFF)
         self.ReadBusy()
         
-    def init(self):
-        # EPD hardware init start     
+    def init(self):   
         self.reset()
 
         self.ReadBusy()   
@@ -220,33 +230,15 @@ class EPD(framebuf.FrameBuffer):
         self.ReadBusy()
 
         self.SetLut(self.full_lut)
-        # EPD hardware init end
         return 0
 
     def display(self, image):
         if image is None:
             return
         self.send_command(0x24)  # WRITE_RAM
-        for j in range(0, int(self.width / 8)):  # reversed horizontal bytes
-            for i in range(self.height - 1, -1, -1):  # reversed vertical
-                index = (self.height - 1 - i) + (int(self.width / 8) - 1 - j) * self.height
-                self.send_data(image[index])
-        self.TurnOnDisplay()
-
-
-    def display_Base(self, image):
-        if (image == None):
-            return   
-        self.send_command(0x24) # WRITE_RAM
-        for j in range(int(self.width / 8) - 1, -1, -1):
-            for i in range(0, self.height):
-                self.send_data(image[i + j * self.height])    
-                
-        self.send_command(0x26) # WRITE_RAM
-        for j in range(int(self.width / 8) - 1, -1, -1):
-            for i in range(0, self.height):
-                self.send_data(image[i + j * self.height])      
-                
+        for j in range(0, int(self.width / 8)):          # left to right
+            for i in range(self.height - 1, -1, -1):      # bottom to top
+                self.send_data(flip_byte(image[i + j * self.height]))
         self.TurnOnDisplay()
 
     def display_Partial(self):
@@ -281,10 +273,10 @@ class EPD(framebuf.FrameBuffer):
         self.SetWindow(0, 0, self.width - 1, self.height - 1)
         self.SetCursor(0, 0)
         
-        self.send_command(0x24) # WRITE_RAM
-        for j in range(int(self.width / 8) - 1, -1, -1):
-            for i in range(0, self.height):
-                self.send_data(image[i + j * self.height])    
+        self.send_command(0x24)
+        for j in range(0, int(self.width / 8)):
+            for i in range(self.height - 1, -1, -1):
+                self.send_data(flip_byte(image[i + j * self.height])) 
         self.TurnOnDisplay_Partial()
 
     def Clear(self, color):
