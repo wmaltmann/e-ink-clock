@@ -3,13 +3,11 @@ import framebuf
 def write_font(fb: framebuf.FrameBuffer, font, text, x_offset, y_offset, width=0):
     height = font['height']
 
-    # First, calculate total width of the text
     text_width = 0
     for char in text:
         if char in font:
             text_width += font[char]['width']
 
-    # Adjust x start position if needed
     if width > 0 and text_width < width:
         x = x_offset + (width - text_width) // 2
     else:
@@ -17,7 +15,7 @@ def write_font(fb: framebuf.FrameBuffer, font, text, x_offset, y_offset, width=0
 
     for char in text:
         if char not in font:
-            continue  # Skip unknown characters
+            continue # Skip characters not in the font
 
         char_width = font[char]['width']
         bitmap_hex = font[char]['bitmap']
@@ -38,8 +36,6 @@ def write_font(fb: framebuf.FrameBuffer, font, text, x_offset, y_offset, width=0
 
         x += char_width
     return x
-
-
 
 def _hex_string_to_bit_array(hex_string):
     bit_array = []

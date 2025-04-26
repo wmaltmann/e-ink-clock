@@ -4,12 +4,17 @@ from lib.wifi import Wifi
 from lib.clock  import Clock
 from lib.display import Display
 from lib.alarm  import Alarm
+from lib.buttons import Buttons
+from lib.nightlight import Nightlight
 
 CONFIG = Config()
 DISPLAY = Display()
+ALARM = Alarm()
+NIGHTLIGHT = Nightlight()
+BUTTONS = Buttons(NIGHTLIGHT)
 WIFI = Wifi(CONFIG)
 CLOCK = Clock(WIFI)
-ALARM = Alarm()
+
 
 async def clock_task():
     while True:
