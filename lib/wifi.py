@@ -29,9 +29,12 @@ class Wifi:
         return False
 
     def disconnect(self):
+        if self.wlan.isconnected():
+            self.wlan.disconnect()   # <-- Properly disconnect first
         if self.wlan.active():
             self.wlan.active(False)
-            print("Wi-Fi interface disabled")
+        print("Wi-Fi interface disabled")
+
 
     def is_connected(self) -> bool:
         return self.wlan.isconnected()

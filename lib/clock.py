@@ -15,7 +15,7 @@ def dec2bcd(dec):
     return (dec // 10) * 16 + (dec % 10)
 
 class Clock:
-    def __init__(self, WIFI: Wifi ):
+    def __init__(self, WIFI: Wifi | None = None):
         self.i2c = I2C(1, scl=Pin(27), sda=Pin(26), freq=400000)
         self.WIFI = WIFI
         self.time_source_sys = False
@@ -69,6 +69,9 @@ class Clock:
         self.i2c.writeto_mem(DS3231_I2C_ADDR, 0x00, data)
 
     def set_time_from_ntp(self):
+        if not self.WIFI:
+            print("Wi-Fi not initialized, cannot set time from NTP")
+            return
         if self.WIFI.connect():
             try:
                 ntptime.settime()  # Sets system time in UTC
