@@ -1,6 +1,8 @@
 from lib.datetime import DateTime
 from lib.e2in9 import EPD
-from lib.time_font import write_time_font
+from lib.font import write_font
+from lib.fonts.digital_80 import DIGITAL_80
+from lib.fonts.sans_16 import SANS_16
 
 TIME_CHAR_Y = 24
 TIME_CHAR_X1 = 24
@@ -20,7 +22,7 @@ class Display:
         self._initialize_display()
 
     def update_time(self, time: DateTime):
-        self.hour = f"{time.hour:02}"
+        self.hour = f"{time.hour}"
         self.minute = f"{time.minute:02}"
         self.second = f"{time.second:02}"
         self.am_pm = time.am_pm
@@ -29,16 +31,9 @@ class Display:
     def _update_display(self):
         self.epd.reset()
         self.epd.init()
-        self._initialize_display()
-        if self.hour[0] != '0':
-            write_time_font(self.epd, str(self.hour)[0], TIME_CHAR_X1, TIME_CHAR_Y )
-        write_time_font(self.epd, str(self.hour)[1], TIME_CHAR_X2, TIME_CHAR_Y )
-        write_time_font(self.epd, ":", TIME_CHAR_X3, TIME_CHAR_Y )
-        write_time_font(self.epd, str(self.minute)[0], TIME_CHAR_X4, TIME_CHAR_Y )
-        write_time_font(self.epd, str(self.minute)[1], TIME_CHAR_X5, TIME_CHAR_Y )
-        if self.am_pm == "AM" or self.am_pm == "PM":
-            write_time_font(self.epd, self.am_pm, TIME_CHAR_X6, TIME_CHAR_Y )
-        self.epd.display_Partial()
+        x_offest = write_font(self.epd, DIGITAL_80, f"{self.hour}:{self.minute}", TIME_CHAR_X1, TIME_CHAR_Y ,248)
+        write_font(self.epd, SANS_16, f"{self.am_pm}", x_offest, TIME_CHAR_Y + 64 , 0)
+        self.epd.display(self.epd.buffer)
         self.epd.sleep()
 
     def _initialize_display(self):
