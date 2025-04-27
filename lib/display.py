@@ -31,6 +31,7 @@ class Display:
     def _update_display(self):
         self.epd.reset()
         self.epd.init()
+        self.epd.fill(0xff)
         x_offest = write_font(self.epd, DIGITAL_80, f"{self.hour}:{self.minute}", TIME_CHAR_X1, TIME_CHAR_Y ,248)
         write_font(self.epd, SANS_16, f"{self.am_pm}", x_offest, TIME_CHAR_Y + 64 , 0)
         self.epd.display(self.epd.buffer)
