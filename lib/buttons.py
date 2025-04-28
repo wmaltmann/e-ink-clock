@@ -1,6 +1,7 @@
 import time
 from machine import Pin
 from lib.nightlight import Nightlight
+from lib.alarm import Alarm
 
 class Buttons:
     def __init__(self, NIGHTLIGHT:Nightlight):
@@ -60,8 +61,6 @@ class Buttons:
             new_state = pin.value() == 0
             if self.button4 != new_state:
                 self.button4 = new_state
-                if new_state:
-                    self._NIGHTLIGHT.on(True)
-                if not new_state:
-                    self._NIGHTLIGHT.on(False)
+                if new_state:  # only toggle on button press, not release
+                    self._NIGHTLIGHT.on(not self._NIGHTLIGHT.is_on())
             self._last_time_button4 = now
