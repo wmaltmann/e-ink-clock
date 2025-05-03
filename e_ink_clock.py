@@ -7,6 +7,7 @@ from lib.alarm  import Alarm
 from lib.buttons import Buttons
 from lib.nightlight import Nightlight
 from lib.battery import Battery
+from lib.log import Log
 
 CONFIG = Config()
 DISPLAY = Display()
@@ -15,6 +16,7 @@ BATTERY = Battery()
 BUTTONS = Buttons(NIGHTLIGHT)
 WIFI = Wifi(CONFIG)
 CLOCK = Clock(WIFI)
+BATTERY_LOG = Log("battery_level.csv", Log.MODE_CSV, CLOCK)
 ALARM = Alarm(DISPLAY, CLOCK)
 
 
@@ -28,8 +30,9 @@ async def clock_task():
 async def battery_monitor_task():
     while True:
         BATTERY.read()
+        BATTERY_LOG.log(BATTERY.voltage)
         DISPLAY.update_battery(BATTERY.voltage, BATTERY.percentage)
-        await asyncio.sleep(3600)
+        await asyncio.sleep(300)
 
 async def main():
     print("Initializing")
