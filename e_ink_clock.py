@@ -8,17 +8,18 @@ from lib.buttons import Buttons
 from lib.nightlight import Nightlight
 from lib.battery import Battery
 from lib.log import Log
+from lib.webservice import WebService
 
 CONFIG = Config()
 DISPLAY = Display()
 NIGHTLIGHT = Nightlight()
 BATTERY = Battery()
-BUTTONS = Buttons(NIGHTLIGHT)
 WIFI = Wifi(CONFIG)
 CLOCK = Clock(WIFI)
 BATTERY_LOG = Log("battery_level.csv", Log.MODE_CSV, CLOCK)
 ALARM = Alarm(DISPLAY, CLOCK)
-
+WEB_SERVICE = WebService(WIFI, ALARM, DISPLAY)
+BUTTONS = Buttons(NIGHTLIGHT, WEB_SERVICE)
 
 async def clock_task():
     while True:

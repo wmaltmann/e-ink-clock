@@ -1,12 +1,12 @@
 class DateTime:
-    def __init__(self, year, month, day, hour, minute, second, weekday=None):
+    def __init__(self, year, month, day, hour, minute, second, weekday):
         self.year = int(year)
         self.month = int(month)
         self.day = int(day)
         self.hour_24 = int(hour)
         self.minute = int(minute)
         self.second = int(second)
-        self.weekday = int(weekday) if weekday is not None else None
+        self.weekday = int(weekday)
 
         # Determine AM/PM and 12-hour format
         if self.hour_24 == 0:

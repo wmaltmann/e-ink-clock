@@ -1,44 +1,48 @@
-import machine
 import os
-import uos
 import socket
-from sdcard import SDCard
+import uasyncio as asyncio  # Use MicroPython's uasyncio instead of threading
+from lib.wifi import Wifi
+from lib.alarm import Alarm
+from lib.display import Display
+from lib.pages.view_alarms_page import view_alarms_page
+from lib.pages.add_alarm_page import add_alarm_page
+from lib.pages.update_alarm_page import update_alarm_page
+from lib.pages.home_page import home_page
+from lib.pages.not_found import not_found_page
+from lib.pages.delete_alarm_page import delete_alarm_page
 
-class SDWebService:
-    def __init__(self):
+class WebService:
+    def __init__(self, WIFI: Wifi, ALARM: Alarm, DISPLAY: Display):
         self.mode = "Off"
-        self.sd_path = "/sd"
-        self.mount_sd()
-        self.server_socket = None
-
-    def mount_sd(self):
-        spi = machine.SPI(0, baudrate=1_000_000, polarity=0, phase=0,
-                          sck=machine.Pin(18),
-                          mosi=machine.Pin(19),
-                          miso=machine.Pin(16))
-        cs = machine.Pin(17, machine.Pin.OUT)
-        sd = SDCard(spi, cs)
-        vfs = uos.VfsFat(sd)  # type: ignore
-        uos.mount(vfs, self.sd_path)
+        self._server_socket = None
+        self._ALARM = ALARM
+        self._WIFI = WIFI
+        self._DISPLAY = DISPLAY
 
     def set_mode(self, mode):
         if mode == "On":
+            self._DISPLAY.update_web_service(self._DISPLAY.Web_Service_Connecting)
             self.mode = "On"
-            self.start_server()
+            self._WIFI.connect()
+            asyncio.create_task(self.start_server())  # Run server asynchronously
+
         elif mode == "Off":
             self.mode = "Off"
             self.stop_server()
+            self._WIFI.disconnect()
+            self._DISPLAY.update_web_service(self._DISPLAY.Web_Service_Off)
 
-    def start_server(self):
+    async def start_server(self):
         addr = socket.getaddrinfo("0.0.0.0", 80)[0][-1]
-        self.server_socket = socket.socket()
-        self.server_socket.bind(addr)
-        self.server_socket.listen(1)
-        print("Web server running on http://0.0.0.0:80")
+        self._server_socket = socket.socket()
+        self._server_socket.bind(addr)
+        self._server_socket.listen(1)
+        print("Web server running")
+        self._DISPLAY.update_web_service(self._DISPLAY.Web_Service_On)
 
         while self.mode == "On":
             try:
-                cl, addr = self.server_socket.accept()
+                cl, addr = self._server_socket.accept()
                 print("Client connected from", addr)
                 request = b""
                 while True:
@@ -49,102 +53,27 @@ class SDWebService:
                     if b"\r\n\r\n" in request:
                         break
 
-                if b"POST /upload" in request:
-                    self.receive_upload(cl, request)
-                elif b"GET /download?file=" in request:
-                    self.send_download(cl, request.decode())
-                elif b"GET / " in request:
-                    self.send_file_list(cl)
+                if b"GET /alarms" in request:
+                    view_alarms_page(self._ALARM, cl, request)
+                elif b"GET /add_alarm" in request or b"POST /add_alarm" in request:
+                    add_alarm_page(self._ALARM, cl, request)
+                elif b"GET /update_alarm" in request or b"POST /update_alarm" in request:
+                    update_alarm_page(self._ALARM, cl, request)
+                elif b"GET /delete_alarm" in request:
+                    delete_alarm_page(self._ALARM, cl, request)    
+                elif b"GET /" in request:
+                    home_page(cl)
                 else:
-                    self.http_response(cl, "Invalid request", 400)
+                    not_found_page(cl)
             except Exception as e:
                 print("Error:", e)
+            await asyncio.sleep(0)  # Yield control back to the event loop
 
     def stop_server(self):
-        if self.server_socket:
-            self.server_socket.close()
-            self.server_socket = None
+        if self._server_socket:
+            self._server_socket.close()
+            self._server_socket = None
             print("Web server stopped")
-
-    def send_file_list(self, cl):
-        files = os.listdir(self.sd_path)
-        body = "<h1>Files on SD</h1><ul>"
-        for f in files:
-            body += f'<li><a href="/download?file={f}">{f}</a></li>'
-        body += "</ul>"
-        body += '''
-            <form method="POST" action="/upload" enctype="multipart/form-data">
-            <input type="file" name="file">
-            <input type="submit" value="Upload">
-            </form>
-        '''
-        self.http_response(cl, body)
-
-    def send_download(self, cl, request):
-        try:
-            path = request.split("GET /download?file=")[1].split(" ")[0]
-            filepath = f"{self.sd_path}/{path}"
-            if path not in os.listdir(self.sd_path):
-                self.http_response(cl, "File not found", 404)
-                return
-            cl.send("HTTP/1.1 200 OK\r\n")
-            cl.send("Content-Type: application/octet-stream\r\n\r\n")
-            with open(filepath, "rb") as f:
-                while True:
-                    data = f.read(512)
-                    if not data:
-                        break
-                    cl.send(data)
-        except Exception as e:
-            self.http_response(cl, f"Error: {e}", 500)
-        finally:
-            cl.close()
-
-    def receive_upload(self, cl, request_bytes):
-        try:
-            request_str = request_bytes.decode(errors="ignore")
-            content_start = request_str.find("\r\n\r\n") + 4
-            headers = request_str[:content_start]
-
-            # Extract boundary
-            boundary = None
-            for line in headers.split("\r\n"):
-                if "Content-Type: multipart/form-data" in line:
-                    boundary = line.split("boundary=")[-1].strip()
-                    break
-            if not boundary:
-                self.http_response(cl, "Boundary not found", 400)
-                return
-
-            boundary = "--" + boundary
-            body = request_bytes[content_start:]
-
-            # Find start and end of file content
-            parts = body.split(boundary.encode())
-            for part in parts:
-                if b"Content-Disposition" in part:
-                    header_end = part.find(b"\r\n\r\n") + 4
-                    header = part[:header_end].decode(errors="ignore")
-                    content = part[header_end:-2]  # Remove trailing \r\n
-
-                    # Get filename
-                    filename = "upload.bin"
-                    if "filename=" in header:
-                        filename = header.split("filename=")[1].split("\r\n")[0]
-                        filename = filename.strip('"').strip()
-
-                    filepath = f"{self.sd_path}/{filename}"
-                    with open(filepath, "wb") as f:
-                        f.write(content)
-
-                    self.http_response(cl, f"<p>Upload successful: {filename}</p><a href='/'>Back</a>")
-                    return
-
-            self.http_response(cl, "No file uploaded", 400)
-
-        except Exception as e:
-            self.http_response(cl, f"Upload error: {e}", 500)
-
 
     def http_response(self, cl, body, code=200):
         cl.send(f"HTTP/1.1 {code} OK\r\nContent-Type: text/html\r\n\r\n")

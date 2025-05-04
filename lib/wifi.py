@@ -7,8 +7,13 @@ class Wifi:
         self.wlan = network.WLAN(network.STA_IF)
         self.wlan.active(False)
         self.CONFIG = CONFIG
+        self.set_hostname(self.CONFIG.get_network_settings().wifi_hostname)
     
-
+    def set_hostname(self, hostname: str):
+        if hostname:
+            self.wlan.config(hostname=hostname)
+            print(f"Hostname set to: {hostname}")
+    
     def connect(self, timeout: int = 30) -> bool:
         self.wlan.active(True)
         if self.is_connected():

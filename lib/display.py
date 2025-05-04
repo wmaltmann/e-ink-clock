@@ -11,8 +11,13 @@ TIME_CHAR_Y = 24
 TIME_CHAR_X1 = 24
 ALARM_ICON_X = 0
 BATTERY_ICON_X = 268
+WIFI_ICON_X = 230
 
 class Display:
+    Web_Service_On = 1
+    Web_Service_Off = 0
+    Web_Service_Connecting = 2
+
     def __init__(self, hour: int = 0, minute: int = 0, second: int = 0, am_pm ="xx", alarm_enabled: bool = False, voltage: float = 0.0, percentage: int = 0):
         self.hour = f"{hour:02}"
         self.minute = f"{minute:02}"
@@ -24,6 +29,7 @@ class Display:
         self.battery_voltage = voltage
         self.battery_percentage = percentage
         self.battery_icon = "BATTERY_100"
+        self.web_service_status = self.Web_Service_Off
         self.epd = EPD()
         self._initialize_display()
         self._set_battery_icon
@@ -37,6 +43,12 @@ class Display:
 
     def update_alarm(self, enabled: bool):
         self.alarm_enabled = enabled
+        self._update_display()
+
+    def update_web_service(self, state):
+        if state not in (self.Web_Service_On, self.Web_Service_Off, self.Web_Service_Connecting):
+            raise ValueError("Invalid webservice state")
+        self.web_service_status = state
         self._update_display()
 
     def update_battery(self, voltage: float, percentage: int):
@@ -56,6 +68,10 @@ class Display:
         else:
             if self.alarm_enabled:
                 write_icon(self.epd, ICONS_24,"ALARM_ON", ALARM_ICON_X, 0, 0)
+            if self.web_service_status == self.Web_Service_Connecting:
+                write_icon(self.epd, ICONS_24,"WIFI_CONFIG", WIFI_ICON_X, 0, 0)
+            elif self.web_service_status == self.Web_Service_On:
+                write_icon(self.epd, ICONS_24,"WIFI_ON", WIFI_ICON_X, 0, 0)
             write_icon(self.epd, ICONS_24, self.battery_icon, BATTERY_ICON_X, 0, 0)
             time_offset = write_font(self.epd, DIGITAL_80, f"{self.hour}:{self.minute}", TIME_CHAR_X1, TIME_CHAR_Y ,248)
             write_font(self.epd, SANS_16, f"{self.am_pm}", time_offset, TIME_CHAR_Y + 64 , 0)

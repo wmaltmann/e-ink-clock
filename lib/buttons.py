@@ -1,15 +1,16 @@
 import time
 from machine import Pin
 from lib.nightlight import Nightlight
-from lib.alarm import Alarm
+from lib.webservice import WebService
 
 class Buttons:
-    def __init__(self, NIGHTLIGHT:Nightlight):
+    def __init__(self, NIGHTLIGHT:Nightlight, WEB_SERVICE: WebService):
         self._button1_pin = Pin(6, Pin.IN, Pin.PULL_UP)
         self._button2_pin = Pin(7, Pin.IN, Pin.PULL_UP)
         self._button3_pin = Pin(14, Pin.IN, Pin.PULL_UP)
         self._button4_pin = Pin(15, Pin.IN, Pin.PULL_UP)
         self._NIGHTLIGHT = NIGHTLIGHT
+        self._WEB_SERVICE = WEB_SERVICE
 
         self.button1 = self._button1_pin.value() == 0
         self.button2 = self._button2_pin.value() == 0
@@ -30,34 +31,39 @@ class Buttons:
 
     def _button_1_callback(self, pin: Pin):
         now = time.ticks_ms()
-        if time.ticks_diff(now, self._last_time_button1) > 80:
+        if time.ticks_diff(now, self._last_time_button1) > 50:
             new_state = pin.value() == 0
             if self.button1 != new_state:
                 self.button1 = new_state
-                # Add
+                print(f"Button 1: {new_state}")
             self._last_time_button1 = now
 
     def _button_2_callback(self, pin: Pin):
         now = time.ticks_ms()
-        if time.ticks_diff(now, self._last_time_button2) > 80:
+        if time.ticks_diff(now, self._last_time_button2) > 50:
             new_state = pin.value() == 0
             if self.button2 != new_state:
                 self.button2 = new_state
+                print(f"Button 2: {new_state}")
                 # Add
             self._last_time_button2 = now
 
     def _button_3_callback(self, pin: Pin):
         now = time.ticks_ms()
-        if time.ticks_diff(now, self._last_time_button3) > 80:
+        if time.ticks_diff(now, self._last_time_button3) > 50:
             new_state = pin.value() == 0
             if self.button3 != new_state:
                 self.button3 = new_state
-                # Add
+                if new_state:  # only toggle on button press, not release
+                    if self._WEB_SERVICE.mode == "On": 
+                        self._WEB_SERVICE.set_mode("Off")
+                    else:
+                        self._WEB_SERVICE.set_mode("On")
             self._last_time_button3 = now
 
     def _button_4_callback(self, pin: Pin):
         now = time.ticks_ms()
-        if time.ticks_diff(now, self._last_time_button4) > 80:
+        if time.ticks_diff(now, self._last_time_button4) > 50:
             new_state = pin.value() == 0
             if self.button4 != new_state:
                 self.button4 = new_state
