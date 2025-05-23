@@ -18,4 +18,4 @@ class Battery:
         elif self.voltage <= 3.0:
             self.percentage = 0
         else:
-            self.percentage = int(((self.voltage - 3.0) / (4.2 - 3.0)) * 100)
+            self.percentage = int(-6168 + 7326 * self.voltage - 3224 * (self.voltage ** 2) + 620 * (self.voltage ** 3) - 43.5 * (self.voltage ** 4))

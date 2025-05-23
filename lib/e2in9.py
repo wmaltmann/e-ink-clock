@@ -241,9 +241,7 @@ class EPD(framebuf.FrameBuffer):
                 self.send_data(flip_byte(image[i + j * self.height]))
         self.TurnOnDisplay()
 
-    def display_Partial(self):
-        image = self.buffer
-
+    def display_Partial(self, image):
         self.digital_write(self.reset_pin, 0)
         self.delay_ms(2)
         self.digital_write(self.reset_pin, 1)

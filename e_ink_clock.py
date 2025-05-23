@@ -11,7 +11,7 @@ from lib.log import Log
 from lib.webservice import WebService
 
 CONFIG = Config()
-DISPLAY = Display()
+DISPLAY = Display(CONFIG)
 NIGHTLIGHT = Nightlight()
 BATTERY = Battery()
 WIFI = Wifi(CONFIG)

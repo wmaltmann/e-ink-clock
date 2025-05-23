@@ -6,11 +6,15 @@ class NetworkSettings:
         self.wifi_password = password
         self.wifi_hostname = hostname
 
+class ClockSettings:
+    def __init__(self, clock_display_mode="debug"):
+        self.clock_display_mode = clock_display_mode
 
 class Config:
     def __init__(self, filepath="/.config"):
         self.config_filepath = filepath
         self.network = NetworkSettings()
+        self.clock = ClockSettings()
         self._load_config()
 
     def _load_config(self):
@@ -26,11 +30,26 @@ class Config:
                             self.network.wifi_password = value
                         elif key == "HOSTNAME":
                             self.network.wifi_hostname = value
+                        elif key == "CLOCK_DISPLAY_MODE":
+                            if value in ["debug", "full_12h", "partial_12h"]:
+                                self.clock.clock_display_mode = value
+                            else:
+                                self.clock.clock_display_mode = "debug"
         except (OSError, ValueError) as e:
             print(f"Error reading config file: {e}")
 
     def get_network_settings(self):
         return self.network
+    
+    def get_clock_settings(self):
+        return self.clock
+    
+    def update_clock_settings(self, clock_display_mode: str):
+        if clock_display_mode not in ["debug", "full_12h", "partial_12h"]:
+            raise ValueError("Invalid clock mode.")
+        self.clock.clock_display_mode = clock_display_mode
+        self._save_config()
+
 
     def update_network_settings(self, ssid: str, password: str, hostname: str):
         self.network.wifi_ssid = ssid
