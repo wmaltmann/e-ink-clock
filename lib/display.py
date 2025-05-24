@@ -9,7 +9,7 @@ from lib.icons.icons_24 import ICONS_24
 from lib.icons.icons_80 import ICONS_80
 
 TIME_CHAR_Y = 24
-TIME_CHAR_X1 = 24
+TIME_CHAR_X1 = 42
 ALARM_ICON_X = 0
 BATTERY_ICON_X = 268
 WIFI_ICON_X = 230
@@ -100,15 +100,8 @@ class Display:
             write_icon(self.epd, ICONS_80,"BATTERY_0", TIME_CHAR_X1, TIME_CHAR_Y, 248)
             self.lower_power_latch = True
         else:
-            if self.alarm_enabled:
-                write_icon(self.epd, ICONS_24,"ALARM_ON", ALARM_ICON_X, 0, 0)
-            if self.web_service_status == self.Web_Service_Connecting:
-                write_icon(self.epd, ICONS_24,"WIFI_CONFIG", WIFI_ICON_X, 0, 0)
-            elif self.web_service_status == self.Web_Service_On:
-                write_icon(self.epd, ICONS_24,"WIFI_ON", WIFI_ICON_X, 0, 0)
-            write_icon(self.epd, ICONS_24, self.battery_icon, BATTERY_ICON_X, 0, 0)
-            time_offset = write_font(self.epd, DIGITAL_80, f"{self.hour}:{self.minute}", TIME_CHAR_X1, TIME_CHAR_Y ,248)
-            write_font(self.epd, SANS_16, f"{self.am_pm}", time_offset, TIME_CHAR_Y + 64 , 0)
+            self._write_icons()
+            self._write_time()
         self.epd.display(self.epd.buffer)
         self.epd.sleep()
 
@@ -120,15 +113,8 @@ class Display:
             write_icon(self.epd, ICONS_80,"BATTERY_0", TIME_CHAR_X1, TIME_CHAR_Y, 248)
             self.lower_power_latch = True
         else:
-            if self.alarm_enabled:
-                write_icon(self.epd, ICONS_24,"ALARM_ON", ALARM_ICON_X, 0, 0)
-            if self.web_service_status == self.Web_Service_Connecting:
-                write_icon(self.epd, ICONS_24,"WIFI_CONFIG", WIFI_ICON_X, 0, 0)
-            elif self.web_service_status == self.Web_Service_On:
-                write_icon(self.epd, ICONS_24,"WIFI_ON", WIFI_ICON_X, 0, 0)
-            write_icon(self.epd, ICONS_24, self.battery_icon, BATTERY_ICON_X, 0, 0)
-            time_offset = write_font(self.epd, DIGITAL_80, f"{self.hour}:{self.minute}", TIME_CHAR_X1, TIME_CHAR_Y ,248)
-            write_font(self.epd, SANS_16, f"{self.am_pm}", time_offset, TIME_CHAR_Y + 64 , 0)
+            self._write_icons()
+            self._write_time()
         self.epd.display_Partial(self.epd.buffer)
         # self.epd.sleep()
 
@@ -137,15 +123,8 @@ class Display:
         self.epd.init()
         self.epd.fill(0xff)
         self.epd.text(f"{self.battery_voltage}", 0, 0, 0x00)
-        if self.alarm_enabled:
-            write_icon(self.epd, ICONS_24,"ALARM_ON", ALARM_ICON_X, 0, 0)
-        if self.web_service_status == self.Web_Service_Connecting:
-            write_icon(self.epd, ICONS_24,"WIFI_CONFIG", WIFI_ICON_X, 0, 0)
-        elif self.web_service_status == self.Web_Service_On:
-            write_icon(self.epd, ICONS_24,"WIFI_ON", WIFI_ICON_X, 0, 0)
-        write_icon(self.epd, ICONS_24, self.battery_icon, BATTERY_ICON_X, 0, 0)
-        time_offset = write_font(self.epd, DIGITAL_80, f"{self.hour}:{self.minute}", TIME_CHAR_X1, TIME_CHAR_Y ,248)
-        write_font(self.epd, SANS_16, f"{self.am_pm}", time_offset, TIME_CHAR_Y + 64 , 0)
+        self._write_icons()
+        self._write_time()
         self.epd.display(self.epd.buffer)
         self.epd.sleep()
 
@@ -162,3 +141,22 @@ class Display:
             handler(self)
         else:
             raise ValueError(f"Invalid clock mode: {mode}")
+    
+    def _write_icons(self):
+        if self.alarm_enabled:
+            write_icon(self.epd, ICONS_24,"ALARM_ON", ALARM_ICON_X, 0, 0)
+        if self.web_service_status == self.Web_Service_Connecting:
+            write_icon(self.epd, ICONS_24,"WIFI_CONFIG", WIFI_ICON_X, 0, 0)
+        elif self.web_service_status == self.Web_Service_On:
+            write_icon(self.epd, ICONS_24,"WIFI_ON", WIFI_ICON_X, 0, 0)
+        write_icon(self.epd, ICONS_24, self.battery_icon, BATTERY_ICON_X, 0, 0)
+
+    def _write_time(self):
+        if int(self.hour) > 9 :
+            write_font(self.epd, DIGITAL_80, f"!", TIME_CHAR_X1, TIME_CHAR_Y)
+        time_offset = write_font(self.epd, DIGITAL_80, f"{self.hour}"[-1]+f":{self.minute}", TIME_CHAR_X1+16, TIME_CHAR_Y)
+        write_font(self.epd, SANS_16, f"{self.am_pm}", time_offset, TIME_CHAR_Y + 64 , 0)
+
+    def _write_time_old(self):
+        time_offset = write_font(self.epd, DIGITAL_80, f"{self.hour}:{self.minute}", TIME_CHAR_X1, TIME_CHAR_Y ,248)
+        write_font(self.epd, SANS_16, f"{self.am_pm}", time_offset, TIME_CHAR_Y + 64 , 0)
