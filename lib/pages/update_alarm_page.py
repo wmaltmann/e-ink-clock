@@ -1,6 +1,23 @@
 from lib.alarm_data import AlarmData
 from lib.alarm import Alarm
 
+def unescape_text(text):
+    result = ""
+    i = 0
+    while i < len(text):
+        if text[i] == '%' and i + 2 < len(text):
+            try:
+                hex_value = text[i+1:i+3]
+                result += chr(int(hex_value, 16))
+                i += 3
+            except ValueError:
+                result += text[i]
+                i += 1
+        else:
+            result += text[i]
+            i += 1
+    return result
+
 def parse_query_params(request_line):
     try:
         parts = request_line.split(" ")
@@ -16,7 +33,9 @@ def parse_query_params(request_line):
         for pair in query_string.split("&"):
             if "=" in pair:
                 key, value = pair.split("=", 1)
-                params[key] = value.replace("+", " ")
+                key = unescape_text(key.replace("+", " "))
+                value = unescape_text(value.replace("+", " "))
+                params[key] = value
         return params
     except Exception as e:
         print("Query parse error:", e)
@@ -35,6 +54,7 @@ def update_alarm_page(ALARM: Alarm , cl, request):
     request_line = request_str.split("\r\n", 1)[0]
     query = parse_query_params(request_line)
     name = query.get("name", "")
+    print("Update alarm request for:", name)
     alarm = ALARM.get_alarm(name)
 
     if alarm is None:

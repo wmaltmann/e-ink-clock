@@ -1,5 +1,6 @@
 from lib.config import Config
 from lib.datetime import DateTime
+from lib.alarm_data import AlarmData
 from lib.e2in9 import EPD
 from lib.font import write_font
 from lib.icon import write_icon
@@ -10,7 +11,6 @@ from lib.icons.icons_80 import ICONS_80
 
 TIME_CHAR_Y = 24
 TIME_CHAR_X1 = 42
-ALARM_ICON_X = 0
 BATTERY_ICON_X = 268
 WIFI_ICON_X = 230
 
@@ -19,13 +19,22 @@ class Display:
     Web_Service_Off = 0
     Web_Service_Connecting = 2
 
-    def __init__(self, CONFIG: Config ,hour: int = 0, minute: int = 0, second: int = 0, am_pm ="xx", alarm_enabled: bool = False, voltage: float = 0.0, percentage: int = 0):
+    def __init__(self, CONFIG: Config,
+                 hour: int = 0,
+                 minute: int = 0,
+                 second: int = 0,
+                 am_pm ="xx",
+                 alarm_enabled: bool = False,
+                 next_alarm: AlarmData | None = None,
+                 voltage: float = 0.0,
+                 percentage: int = 0):
         self.CONFIG = CONFIG
         self.hour = f"{hour:02}"
         self.minute = f"{minute:02}"
         self.second = f"{second:02}"
         self.am_pm = am_pm
         self.alarm_enabled = alarm_enabled
+        self.next_alarm = next_alarm
         self.lower_power = False
         self.lower_power_latch = False
         self.battery_voltage = voltage
@@ -43,8 +52,9 @@ class Display:
         self.am_pm = time.am_pm
         self._update_display()
 
-    def update_alarm(self, enabled: bool):
+    def update_alarm(self, enabled: bool, next_alarm: AlarmData | None = None):
         self.alarm_enabled = enabled
+        self.next_alarm = next_alarm
         self._update_display()
 
     def update_web_service(self, state):
@@ -100,6 +110,7 @@ class Display:
             write_icon(self.epd, ICONS_80,"BATTERY_0", TIME_CHAR_X1, TIME_CHAR_Y, 248)
             self.lower_power_latch = True
         else:
+            self._write_alarm()
             self._write_icons()
             self._write_time()
         self.epd.display(self.epd.buffer)
@@ -113,6 +124,7 @@ class Display:
             write_icon(self.epd, ICONS_80,"BATTERY_0", TIME_CHAR_X1, TIME_CHAR_Y, 248)
             self.lower_power_latch = True
         else:
+            self._write_alarm()
             self._write_icons()
             self._write_time()
         self.epd.display_Partial(self.epd.buffer)
@@ -123,6 +135,7 @@ class Display:
         self.epd.init()
         self.epd.fill(0xff)
         self.epd.text(f"{self.battery_voltage}", 0, 0, 0x00)
+        self._write_alarm()
         self._write_icons()
         self._write_time()
         self.epd.display(self.epd.buffer)
@@ -135,16 +148,29 @@ class Display:
     }
 
     def _clock_mode_handler(self, mode):
-        print(f"Clock mode: {mode}")
         handler = self.clock_mode_handlers.get(mode)
         if handler:
             handler(self)
         else:
             raise ValueError(f"Invalid clock mode: {mode}")
     
-    def _write_icons(self):
+    def _write_alarm(self):
+        ALARM_ICON_X = 0
+        alarm_offset = 0
         if self.alarm_enabled:
-            write_icon(self.epd, ICONS_24,"ALARM_ON", ALARM_ICON_X, 0, 0)
+            alarm_offset = write_icon(self.epd, ICONS_24,"ALARM_ON", ALARM_ICON_X, 0, 0)
+        else:
+            return
+        alarm_text = ""
+        if self.next_alarm is None:
+            alarm_text = "No Alarm"
+        else:
+            days = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"]
+            next_active_day = "" if self.next_alarm.next_active_day is None else days[self.next_alarm.next_active_day]
+            alarm_text = f"{next_active_day} {self.next_alarm.hour_12}:{self.next_alarm.minute:02} {self.next_alarm.am_pm}"
+        self.epd.text(alarm_text, alarm_offset + 4, 8, 0)
+    
+    def _write_icons(self):
         if self.web_service_status == self.Web_Service_Connecting:
             write_icon(self.epd, ICONS_24,"WIFI_CONFIG", WIFI_ICON_X, 0, 0)
         elif self.web_service_status == self.Web_Service_On:

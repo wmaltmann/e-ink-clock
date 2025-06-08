@@ -25,7 +25,8 @@ class Alarm:
     def _switch_changed(self, pin):
         if self.alarm_enabled != (pin.value() == 0):
             self.alarm_enabled = pin.value() == 0
-            self._DISPLAY.update_alarm(self.alarm_enabled)
+            self._next_alarm = self._get_next_alarm()
+            self._DISPLAY.update_alarm(self.alarm_enabled, self._next_alarm)
 
     def _load_alarms(self):
         try:
@@ -45,12 +46,12 @@ class Alarm:
             print(f"Failed to save alarms: {e}")
     
     def _get_next_alarm(self):
-        now = self._CLOCK.get_time()  # current time as a DateTime instance
-        current_day = now.weekday  # 0 = Monday, 6 = Sunday
+        now = self._CLOCK.get_time()
+        current_day = now.weekday  # 0=Monday, ..., 6=Sunday
         current_minutes = now.hour * 60 + now.minute
 
         soonest = None
-        soonest_delta = float('inf')  # Initialize to infinity so any alarm can be smaller
+        soonest_delta = float('inf')
 
         for alarm in self._alarms:
             if not alarm.enabled:
@@ -62,15 +63,16 @@ class Alarm:
                     continue
 
                 alarm_minutes = alarm.hour * 60 + alarm.minute
-                # Compute total minutes to wait
-                delta_days = day_offset
-                delta_minutes = (alarm_minutes - current_minutes) + (delta_days * 1440)
-                if delta_days == 0 and alarm_minutes < current_minutes:
-                    continue  # skip alarms earlier today
+
+                if day_offset == 0 and alarm_minutes < current_minutes:
+                    continue
+
+                delta_minutes = (alarm_minutes - current_minutes) + (day_offset * 1440)
 
                 if delta_minutes < soonest_delta:
                     soonest = alarm
                     soonest_delta = delta_minutes
+                    soonest.next_active_day = check_day  # store the day index of next active alarm
 
         self._next_alarm = soonest
         return soonest
