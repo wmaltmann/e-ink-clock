@@ -53,13 +53,13 @@ def add_alarm_page(ALARM, cl, request):
         Minute: <input type="number" name="minute" min="0" max="59"><br>
         Frequency: <input type="number" name="frequency" value="440"><br>
         <p>Days:</p>
-        <label><input type="checkbox" name="day0">Sun</label>
-        <label><input type="checkbox" name="day1">Mon</label>
-        <label><input type="checkbox" name="day2">Tue</label>
-        <label><input type="checkbox" name="day3">Wed</label>
-        <label><input type="checkbox" name="day4">Thu</label>
-        <label><input type="checkbox" name="day5">Fri</label>
-        <label><input type="checkbox" name="day6">Sat</label><br>
+        <label><input type="checkbox" name="day0">Mon</label>
+        <label><input type="checkbox" name="day1">Tue</label>
+        <label><input type="checkbox" name="day2">Wed</label>
+        <label><input type="checkbox" name="day3">Thu</label>
+        <label><input type="checkbox" name="day4">Fri</label>
+        <label><input type="checkbox" name="day5">Sat</label>
+        <label><input type="checkbox" name="day6">Sun</label><br>
         <p>Options:</p>
         <label><input type="checkbox" name="enabled">Enabled</label><br>
         <label><input type="checkbox" name="vibrate">Vibrate</label><br>

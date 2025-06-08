@@ -105,7 +105,7 @@ def update_alarm_page(ALARM: Alarm , cl, request):
         Frequency: <input type="number" name="frequency" value="{alarm.frequency}"><br>
         <p>Days:</p>
     """
-    for i, day in enumerate(["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"]):
+    for i, day in enumerate(["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]):
         html += f'<label><input type="checkbox" name="day{i}" {checked(alarm.days[i])}>{day}</label> '
 
     html += f"""

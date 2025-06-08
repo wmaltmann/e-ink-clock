@@ -15,7 +15,7 @@ def view_alarms_page(ALARM: Alarm, cl, request):
     for i, alarm in enumerate(ALARM.get_alarms()):
         active_days = ", ".join([
             day for day, active in zip(
-                ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"], alarm.days
+                ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"], alarm.days
             ) if active
         ])
         time_str = f"{alarm.hour:02}:{alarm.minute:02}"

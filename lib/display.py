@@ -165,7 +165,7 @@ class Display:
         if self.next_alarm is None:
             alarm_text = "No Alarm"
         else:
-            days = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"]
+            days = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]
             next_active_day = "" if self.next_alarm.next_active_day is None else days[self.next_alarm.next_active_day]
             alarm_text = f"{next_active_day} {self.next_alarm.hour_12}:{self.next_alarm.minute:02} {self.next_alarm.am_pm}"
         self.epd.text(alarm_text, alarm_offset + 4, 8, 0)
