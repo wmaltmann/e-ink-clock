@@ -54,11 +54,11 @@ class Buttons:
             new_state = pin.value() == 0
             if self.button3 != new_state:
                 self.button3 = new_state
-                if new_state:  # only toggle on button press, not release
-                    if self._WEB_SERVICE.mode == "On": 
-                        self._WEB_SERVICE.set_mode("Off")
+                if new_state:
+                    if self._WEB_SERVICE.enabled: 
+                        self._WEB_SERVICE.disable()
                     else:
-                        self._WEB_SERVICE.set_mode("On")
+                        self._WEB_SERVICE.enable()
             self._last_time_button3 = now
 
     def _button_4_callback(self, pin: Pin):
@@ -67,6 +67,6 @@ class Buttons:
             new_state = pin.value() == 0
             if self.button4 != new_state:
                 self.button4 = new_state
-                if new_state:  # only toggle on button press, not release
+                if new_state:
                     self._NIGHTLIGHT.on(not self._NIGHTLIGHT.is_on())
             self._last_time_button4 = now

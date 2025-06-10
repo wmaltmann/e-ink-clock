@@ -15,6 +15,7 @@ def add_alarm_page(ALARM, cl, request):
             vibrate = params.get("vibrate", "off") == "on"
             tone = params.get("tone", "off") == "on"
             ramp = params.get("ramp", "off") == "on"
+            audio = params.get("audio", "off") == "on"
             frequency = int(params.get("frequency", 440))
 
             # Parse days (checkboxes)
@@ -29,6 +30,7 @@ def add_alarm_page(ALARM, cl, request):
                 vibrate=vibrate,
                 tone=tone,
                 ramp=ramp,
+                audio=audio,
                 frequency=frequency
             )
 
@@ -65,6 +67,7 @@ def add_alarm_page(ALARM, cl, request):
         <label><input type="checkbox" name="vibrate">Vibrate</label><br>
         <label><input type="checkbox" name="tone" checked>Tone</label><br>
         <label><input type="checkbox" name="ramp">Ramp</label><br>
+        <label><input type="checkbox" name="audio">Audio</label><br>
         <input type="submit" value="Add Alarm">
     </form>
     <br><a href="/alarms">Back to alarms</a>

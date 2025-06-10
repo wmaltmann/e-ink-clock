@@ -79,6 +79,7 @@ def update_alarm_page(ALARM: Alarm , cl, request):
                 vibrate=params.get("vibrate", "off") == "on",
                 tone=params.get("tone", "off") == "on",
                 ramp=params.get("ramp", "off") == "on",
+                audio=params.get("audio", "off") == "on",
                 frequency=int(params.get("frequency", 440))
             )
 
@@ -114,6 +115,7 @@ def update_alarm_page(ALARM: Alarm , cl, request):
         <label><input type="checkbox" name="vibrate" {checked(alarm.vibrate)}>Vibrate</label><br>
         <label><input type="checkbox" name="tone" {checked(alarm.tone)}>Tone</label><br>
         <label><input type="checkbox" name="ramp" {checked(alarm.ramp)}>Ramp</label><br>
+        <label><input type="checkbox" name="audio" {checked(alarm.audio)}>Audio</label><br>
         <input type="submit" value="Update Alarm">
     </form>
     <br><a href="/alarms">Back to alarms</a>

@@ -5,6 +5,7 @@ from lib.clock import Clock
 from lib.alarm_data import AlarmData
 from lib.datetime import DateTime
 from lib.tone_player import TonePlayer
+from lib.audio_player import AudioPlayer
 
 try:
     from typing import List
@@ -12,8 +13,9 @@ except ImportError:
     pass
 
 class Alarm:
-    def __init__(self, DISPLAY: Display, CLOCK: Clock, TONE_PLAYER: TonePlayer):
+    def __init__(self, DISPLAY: Display, CLOCK: Clock, TONE_PLAYER: TonePlayer, AUDIO_PLAYER: AudioPlayer):
         self.TONE_PLAYER = TONE_PLAYER
+        self.AUDIO_PLAYER = AUDIO_PLAYER
         self._pin = Pin(22, Pin.IN, Pin.PULL_UP)
         self.alarm_enabled = self._pin.value() == 0
         self._pin.irq(trigger=Pin.IRQ_FALLING | Pin.IRQ_RISING, handler=self._switch_changed)
@@ -37,10 +39,12 @@ class Alarm:
                                              50,
                                              1.0,
                                              self._next_alarm.ramp if self._next_alarm else False)
+                self.AUDIO_PLAYER.update_audio(300, self._next_alarm.ramp if self._next_alarm else False)
                 self._DISPLAY.update_alarm(self.alarm_enabled, self._next_alarm)
             else:
                 self.alarm_triggered = False
                 self.TONE_PLAYER.disable()
+                self.AUDIO_PLAYER.disable()
                 self._DISPLAY.update_alarm(self.alarm_enabled, None)
 
     def _load_alarms(self):
@@ -166,5 +170,9 @@ class Alarm:
                 now.minute == self._next_alarm.minute):
 
                 self.alarm_triggered = True
-                self.TONE_PLAYER.enable()
-                print(f"Alarm '{self._next_alarm.name}' triggered!")
+                if self._next_alarm.tone:
+                    self.TONE_PLAYER.enable()
+                    print(f"Alarm '{self._next_alarm.name}' tone triggered!")
+                elif self._next_alarm.audio:
+                    self.AUDIO_PLAYER.enable()
+                    print(f"Alarm '{self._next_alarm.name}' audio triggered!")

@@ -1,5 +1,18 @@
 class AlarmData:
-    def __init__(self, hour: int, minute: int, days, name, next_active_day : int | None = None, enabled=False, vibrate=False, tone=True, ramp=False, frequency=440, hour_12 = 0, am_pm = None):
+    def __init__(self,
+                 hour: int,
+                 minute: int,
+                 days,
+                 name,
+                 next_active_day : int | None = None,
+                 enabled=False,
+                 vibrate=False,
+                 tone=True,
+                 audio=False,
+                 ramp=False,
+                 frequency=440,
+                 hour_12 = 0,
+                 am_pm = None):
         if not (0 <= hour <= 23):
             raise ValueError("hour must be between 0 and 23")
         if not (0 <= minute <= 59):
@@ -14,6 +27,7 @@ class AlarmData:
         self.enabled = enabled
         self.vibrate = vibrate
         self.tone = tone
+        self.audio = audio
         self.ramp = ramp
         self.frequency = frequency
         self.name = name
@@ -30,5 +44,5 @@ class AlarmData:
         time_str = f"{self.hour:02}:{self.minute:02}"
         return (
             f"Alarm at {time_str} | Enabled: {self.enabled} | Days: {', '.join(active_days)} | "
-            f"Vibrate: {self.vibrate} | Tone: {self.tone} | Ramp: {self.ramp} | Freq: {self.frequency}Hz"
+            f"Vibrate: {self.vibrate} | Tone: {self.tone} | Audio: {self.audio} | Ramp: {self.ramp} | Freq: {self.frequency}Hz"
         )
