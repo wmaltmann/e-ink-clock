@@ -50,6 +50,7 @@ class Display:
         self.minute = f"{time.minute:02}"
         self.second = f"{time.second:02}"
         self.am_pm = time.am_pm
+        self.date = time.date_string()
         self._update_display()
 
     def update_alarm(self, enabled: bool, next_alarm: AlarmData | None = None):
@@ -113,6 +114,7 @@ class Display:
             self._write_alarm()
             self._write_icons()
             self._write_time()
+            self._write_date()
         self.epd.display(self.epd.buffer)
         self.epd.sleep()
 
@@ -127,6 +129,7 @@ class Display:
             self._write_alarm()
             self._write_icons()
             self._write_time()
+            self._write_date()
         self.epd.display_Partial(self.epd.buffer)
         # self.epd.sleep()
 
@@ -138,6 +141,7 @@ class Display:
         self._write_alarm()
         self._write_icons()
         self._write_time()
+        self._write_date()
         self.epd.display(self.epd.buffer)
         self.epd.sleep()
 
@@ -186,3 +190,6 @@ class Display:
     def _write_time_old(self):
         time_offset = write_font(self.epd, DIGITAL_80, f"{self.hour}:{self.minute}", TIME_CHAR_X1, TIME_CHAR_Y ,248)
         write_font(self.epd, SANS_16, f"{self.am_pm}", time_offset, TIME_CHAR_Y + 64 , 0)
+
+    def _write_date(self):
+        self.epd.text(self.date, 106, 112, 0)

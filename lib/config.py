@@ -9,6 +9,8 @@ class NetworkSettings:
 class ClockSettings:
     def __init__(self, clock_display_mode="debug"):
         self.clock_display_mode = clock_display_mode
+        self.timezone = "CST"
+        self.daylight_saving = True
 
 class Config:
     def __init__(self, filepath="/.config"):
@@ -35,6 +37,10 @@ class Config:
                                 self.clock.clock_display_mode = value
                             else:
                                 self.clock.clock_display_mode = "debug"
+                        elif key == "TIMEZONE":
+                            self.clock.timezone = value
+                        elif key == "DAYLIGHT_SAVING":
+                            self.clock.daylight_saving = value if value.upper() == "TRUE" else False
         except (OSError, ValueError) as e:
             print(f"Error reading config file: {e}")
 
@@ -63,5 +69,8 @@ class Config:
                 f.write(f"SSID={self.network.wifi_ssid}\n")
                 f.write(f"PASSWORD={self.network.wifi_password}\n")
                 f.write(f"HOSTNAME={self.network.wifi_hostname}\n")
+                f.write(f"CLOCK_DISPLAY_MODE={self.clock.clock_display_mode}\n")
+                f.write(f"TIMEZONE={self.clock.timezone}\n")
+                f.write(f"DAYLIGHT_SAVING={str(self.clock.daylight_saving).upper()}\n")
         except OSError as e:
             print(f"Error saving config file: {e}")

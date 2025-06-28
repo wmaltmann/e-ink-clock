@@ -25,3 +25,11 @@ class DateTime:
     def string(self):
         return (f"{self.year}-{self.month:02}-{self.day:02} "
                 f"{self.hour_24:02}:{self.minute:02}:{self.second:02}")
+
+    def date_string(self):
+        weekdays = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]
+        months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun",
+                  "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
+        weekday_str = weekdays[self.weekday % 7]
+        month_str = months[self.month - 1]
+        return f"{weekday_str}, {month_str} {self.day}"

@@ -3,10 +3,10 @@ from machine import I2C, Pin
 import ntptime
 from lib.wifi import Wifi
 from lib.datetime import DateTime
+from lib.config import Config
+from lib.timezone import Timezones
 
 DS3231_I2C_ADDR = 0x68
-#TIMEZONE_OFFSET = -6 * 3600  # CST: UTC-6
-TIMEZONE_OFFSET = -5 * 3600  # CDT: UTC-5
 
 def bcd2dec(bcd):
     return (bcd // 16) * 10 + (bcd % 16)
@@ -15,14 +15,20 @@ def dec2bcd(dec):
     return (dec // 10) * 16 + (dec % 10)
 
 class Clock:
-    def __init__(self, WIFI: Wifi | None = None):
+    def __init__(self,  CONFIG : Config, WIFI: Wifi | None = None):
         self.i2c = I2C(1, scl=Pin(27), sda=Pin(26), freq=400000)
         self.WIFI = WIFI
         self.time_source_sys = False
+        self.timezone= CONFIG.get_clock_settings().timezone
+        print(f"Clock timezone: {self.timezone}")
+        self.daylight_saving = CONFIG.get_clock_settings().daylight_saving
+        print(f"Clock daylight saving: {self.daylight_saving}")
+        self.timezone_offset =  Timezones.offset_from_key(self.timezone) + (3600 if self.daylight_saving else  0)
+        print(f"Clock timezone offset: {self.timezone_offset} seconds")
 
     def get_time(self):
         if self.time_source_sys:  
-            t = time.localtime(time.time() + TIMEZONE_OFFSET)
+            t = time.localtime(time.time() + self.timezone_offset)
             return DateTime(t[0], t[1], t[2], t[3], t[4], t[5], t[6])
         else:
             t = self._get_rtc_time()
@@ -42,11 +48,11 @@ class Clock:
         year = bcd2dec(data[6]) + 2000
 
         # Manual offset calculation
-        total_seconds = hour * 3600 + minute * 60 + second + TIMEZONE_OFFSET
+        total_seconds = hour * 3600 + minute * 60 + second + self.timezone_offset
         if total_seconds < 0 or total_seconds >= 86400:
             # Handle overflow with time.mktime and time.localtime
             from_timestamp = time.mktime((year, month, day, hour, minute, second, 0, 0))
-            adjusted = time.localtime(from_timestamp + TIMEZONE_OFFSET)
+            adjusted = time.localtime(from_timestamp + self.timezone_offset)
             return adjusted
         else:
             # Adjust time fields manually
@@ -92,5 +98,8 @@ class Clock:
                 print('Failed to sync time with NTP:', e)
                 self.time_source_sys = False
                 self.WIFI.disconnect()
+        else:
+            print("Setting time from RTC")
+            self.time_source_sys = False
 
         
