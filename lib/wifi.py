@@ -45,4 +45,4 @@ class Wifi:
         return self.wlan.isconnected()
 
     def ifconfig(self):
-        return self.wlan.ifconfig() if self.is_connected() else None
+        return self.wlan.ifconfig() if self.is_connected() else ""

@@ -50,7 +50,7 @@ class WebService:
         self._server_socket.bind(addr)
         self._server_socket.listen(1)
         print("Web server running")
-        self._DISPLAY.update_web_service(self._DISPLAY.Web_Service_On)
+        self._DISPLAY.update_web_service(self._DISPLAY.Web_Service_On, self._WIFI.ifconfig()[0])
 
         while self.enabled:
             try:
