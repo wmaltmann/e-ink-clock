@@ -26,10 +26,42 @@ class DateTime:
         return (f"{self.year}-{self.month:02}-{self.day:02} "
                 f"{self.hour_24:02}:{self.minute:02}:{self.second:02}")
 
-    def date_string(self):
+    def date_string_short(self):
         weekdays = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]
         months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun",
                   "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
+       
         weekday_str = weekdays[self.weekday % 7]
         month_str = months[self.month - 1]
         return f"{weekday_str}, {month_str} {self.day}"
+    
+    def date_string_long(self):
+        weekdays = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"]
+        months = ["January", "February", "March", "April", "May", "June",
+                  "July", "August", "September", "October", "November", "December"]
+
+        weekday_str = weekdays[self.weekday % 7]
+        month_str = months[self.month - 1]
+        return f"{weekday_str}, {month_str} {self.day}"
+    
+    def date_string_mixed_suffix(self):
+        weekdays = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"]
+        months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun",
+                  "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
+
+        weekday_str = weekdays[self.weekday % 7]
+        month_str = months[self.month - 1]
+        return f"{weekday_str}, {month_str} {self.day}{self._get_day_suffix(self.day)}"
+    
+    def _get_day_suffix(self, day: int) -> str:
+        if 11 <= day % 100 <= 13:
+            return "$"
+        last_digit = day % 10
+        if last_digit == 1:
+            return "!"
+        elif last_digit == 2:
+            return "@"
+        elif last_digit == 3:
+            return "#"
+        else:
+            return "$"

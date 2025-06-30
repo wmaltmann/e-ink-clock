@@ -6,6 +6,7 @@ from lib.font import write_font
 from lib.icon import write_icon
 from lib.fonts.digital_80 import DIGITAL_80
 from lib.fonts.sans_16 import SANS_16
+from lib.fonts.franklin_18 import FRANKLIN_18
 from lib.icons.icons_24 import ICONS_24
 from lib.icons.icons_80 import ICONS_80
 
@@ -51,7 +52,7 @@ class Display:
         self.minute = f"{time.minute:02}"
         self.second = f"{time.second:02}"
         self.am_pm = time.am_pm
-        self.date = time.date_string()
+        self.date = time.date_string_mixed_suffix()
         self._update_display()
 
     def update_alarm(self, enabled: bool, next_alarm: AlarmData | None = None):
@@ -186,11 +187,8 @@ class Display:
         if int(self.hour) > 9 :
             write_font(self.epd, DIGITAL_80, f"!", TIME_CHAR_X1, TIME_CHAR_Y)
         time_offset = write_font(self.epd, DIGITAL_80, f"{self.hour}"[-1]+f":{self.minute}", TIME_CHAR_X1+16, TIME_CHAR_Y)
-        write_font(self.epd, SANS_16, f"{self.am_pm}", time_offset, TIME_CHAR_Y + 64 , 0)
-
-    def _write_time_old(self):
-        time_offset = write_font(self.epd, DIGITAL_80, f"{self.hour}:{self.minute}", TIME_CHAR_X1, TIME_CHAR_Y ,248)
-        write_font(self.epd, SANS_16, f"{self.am_pm}", time_offset, TIME_CHAR_Y + 64 , 0)
+        write_font(self.epd, FRANKLIN_18, f"{self.am_pm}", time_offset + 4, TIME_CHAR_Y + 64 , 24)
+    
     def _write_web_service(self):
         if self.web_service_status == self.Web_Service_Connecting:
             write_icon(self.epd, ICONS_24,"WIFI_CONFIG", WIFI_ICON_X, 0, 0)
@@ -198,6 +196,7 @@ class Display:
             write_icon(self.epd, ICONS_24,"WIFI_ON", WIFI_ICON_X, 0, 0)
         if(self.web_service_message is not None):
             self.epd.text(self.web_service_message, 100, 112, 0)
+    
     def _write_date(self):
         if self.web_service_message is None:
-            self.epd.text(self.date, 106, 112, 0)
+            write_font(self.epd, FRANKLIN_18, f"{self.date}", 0, 110, 296)
