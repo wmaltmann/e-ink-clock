@@ -20,11 +20,8 @@ class Clock:
         self.WIFI = WIFI
         self.time_source_sys = False
         self.timezone= CONFIG.get_clock_settings().timezone
-        print(f"Clock timezone: {self.timezone}")
         self.daylight_saving = CONFIG.get_clock_settings().daylight_saving
-        print(f"Clock daylight saving: {self.daylight_saving}")
         self.timezone_offset =  Timezones.offset_from_key(self.timezone) + (3600 if self.daylight_saving else  0)
-        print(f"Clock timezone offset: {self.timezone_offset} seconds")
 
     def get_time(self):
         if self.time_source_sys:  
