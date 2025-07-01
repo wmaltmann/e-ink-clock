@@ -9,11 +9,10 @@ class NoisePlayer:
     MODE_NONE = "None"
     MODES = [MODE_BROWN, MODE_NONE]
 
-    def __init__(self, duration_sec=4, amplitude=32767 // 4, ramp=False):
-        self.duration_sec = duration_sec
+    def __init__(self, amplitude=32767 // 4, ramp=False):
         self.amplitude = amplitude
         self.ramp = ramp
-        self.sample_rate = 4000
+        self.sample_rate = 8000
         self.bits = 16
         self.enabled = False
         self._running = True
@@ -35,7 +34,7 @@ class NoisePlayer:
             bits=self.bits,
             format=I2S.STEREO,
             rate=self.sample_rate,
-            ibuf=20000
+            ibuf=4096
         )
         enable_left = Pin(3, Pin.OUT)
         enable_right = Pin(4, Pin.OUT)
@@ -45,11 +44,10 @@ class NoisePlayer:
         try:
             ramp_duration_ms = 30000
             start_time = time.ticks_ms()
-            end_time = time.ticks_ms() + int(self.duration_sec * 1000)
 
             last_output = 0.0
 
-            while self.enabled and time.ticks_ms() < end_time:
+            while self.enabled:
                 current_time = time.ticks_ms()
                 elapsed = time.ticks_diff(current_time, start_time)
 
@@ -75,6 +73,8 @@ class NoisePlayer:
                 enable_right.value(1)
                 audio.write(samples)
 
+                await asyncio.sleep_ms(0)
+
         finally:
             enable_left.value(0)
             enable_right.value(0)
@@ -90,7 +90,6 @@ class NoisePlayer:
     def stop(self):
         self._running = False
 
-    def update(self, duration_sec=4, amplitude=32767 // 4, ramp=False):
-        self.duration_sec = duration_sec
+    def update(self, amplitude=32767 // 4, ramp=False):
         self.amplitude = amplitude
         self.ramp = ramp

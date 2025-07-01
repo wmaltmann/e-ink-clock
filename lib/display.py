@@ -1,3 +1,4 @@
+import uasyncio as asyncio
 from lib.config import Config
 from lib.datetime import DateTime
 from lib.alarm_data import AlarmData
@@ -131,6 +132,7 @@ class Display:
             self.lower_power_latch = True
         else:
             self._write_alarm()
+            # await asyncio.sleep_ms(0)
             self._write_icons()
             self._write_time()
             self._write_date()
