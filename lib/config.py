@@ -11,6 +11,7 @@ class ClockSettings:
         self.clock_display_mode = clock_display_mode
         self.timezone = "CST"
         self.daylight_saving = True
+        self.noise_mode = "None"
 
 class Config:
     def __init__(self, filepath="/.config"):
@@ -37,6 +38,11 @@ class Config:
                                 self.clock.clock_display_mode = value
                             else:
                                 self.clock.clock_display_mode = "debug"
+                        elif key == "NOISE_MODE":
+                            if value in ["None", "Brown"]:
+                                self.clock.noise_mode = value
+                            else:
+                                self.clock.noise_mode = "None"
                         elif key == "TIMEZONE":
                             self.clock.timezone = value
                         elif key == "DAYLIGHT_SAVING":
@@ -56,7 +62,12 @@ class Config:
         self.clock.clock_display_mode = clock_display_mode
         self._save_config()
 
-
+    def update_noise_mode(self, noise_mode: str):
+        if noise_mode not in ["None", "Brown"]:
+            raise ValueError("Invalid noise mode.")
+        self.clock.noise_mode = noise_mode
+        self._save_config()
+        
     def update_network_settings(self, ssid: str, password: str, hostname: str):
         self.network.wifi_ssid = ssid
         self.network.wifi_password = password
@@ -72,5 +83,6 @@ class Config:
                 f.write(f"CLOCK_DISPLAY_MODE={self.clock.clock_display_mode}\n")
                 f.write(f"TIMEZONE={self.clock.timezone}\n")
                 f.write(f"DAYLIGHT_SAVING={str(self.clock.daylight_saving).upper()}\n")
+                f.write(f"NOISE_MODE={self.clock.noise_mode}\n")
         except OSError as e:
             print(f"Error saving config file: {e}")

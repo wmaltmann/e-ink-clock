@@ -2,15 +2,17 @@ import time
 from machine import Pin
 from lib.nightlight import Nightlight
 from lib.webservice import WebService
+from lib.noise_player import NoisePlayer
 
 class Buttons:
-    def __init__(self, NIGHTLIGHT:Nightlight, WEB_SERVICE: WebService):
+    def __init__(self, NIGHTLIGHT:Nightlight, WEB_SERVICE: WebService, NOISE_PLAYER: NoisePlayer):
         self._button1_pin = Pin(6, Pin.IN, Pin.PULL_UP)
         self._button2_pin = Pin(7, Pin.IN, Pin.PULL_UP)
         self._button3_pin = Pin(14, Pin.IN, Pin.PULL_UP)
         self._button4_pin = Pin(15, Pin.IN, Pin.PULL_UP)
         self._NIGHTLIGHT = NIGHTLIGHT
         self._WEB_SERVICE = WEB_SERVICE
+        self._NOISE_PLAYER = NOISE_PLAYER
 
         self.button1 = self._button1_pin.value() == 0
         self.button2 = self._button2_pin.value() == 0
@@ -44,8 +46,11 @@ class Buttons:
             new_state = pin.value() == 0
             if self.button2 != new_state:
                 self.button2 = new_state
-                print(f"Button 2: {new_state}")
-                # Add
+                if new_state:
+                    if self._NOISE_PLAYER.mode == NoisePlayer.MODE_BROWN:
+                        self._NOISE_PLAYER.set_mode(NoisePlayer.MODE_NONE)
+                    else:
+                        self._NOISE_PLAYER.set_mode(NoisePlayer.MODE_BROWN)
             self._last_time_button2 = now
 
     def _button_3_callback(self, pin: Pin):

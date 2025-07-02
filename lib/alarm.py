@@ -28,7 +28,6 @@ class Alarm:
         self._load_alarms()
         self._next_alarm = self._get_next_alarm()
         self.alarm_triggered = False
-        self.sleep_noise = NoisePlayer.MODE_BROWN
         print(f"Alarm initialized. Enabled: {self.alarm_enabled}")
 
     def _switch_changed(self, pin):
@@ -43,7 +42,7 @@ class Alarm:
                                              1.0,
                                              self._next_alarm.ramp if self._next_alarm else False)
                 self.AUDIO_PLAYER.update_audio(300, self._next_alarm.ramp if self._next_alarm else False)
-                if self.sleep_noise == NoisePlayer.MODE_BROWN:
+                if self.NOISE_PLAYER.mode == NoisePlayer.MODE_BROWN:
                     self.NOISE_PLAYER.enable()
                 temp = self._DISPLAY.update_alarm(self.alarm_enabled, self._next_alarm)
             else:
@@ -165,13 +164,6 @@ class Alarm:
     def get_next_alarm(self):
         self._get_next_alarm()
         return self._next_alarm
-    
-    def set_noise_mode(self, mode: str):
-        """Set the noise mode for sleep."""
-        if mode not in NoisePlayer.MODES:
-            print(f"Invalid noise mode: {mode}. Valid modes are: {NoisePlayer.MODES}")
-        else:
-            self.sleep_noise = mode
     
     def check_alarm(self, now: DateTime):
         """Check if the current time matches the next alarm."""

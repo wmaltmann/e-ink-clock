@@ -9,7 +9,6 @@ from lib.fonts.digital_80_pre import DIGITAL_80_PRE
 from lib.fonts.franklin_18_pre import FRANKLIN_18_PRE
 from lib.icons.icons_24 import ICONS_24
 from lib.icons.icons_80 import ICONS_80
-from lib.profiler import Profiler
 
 TIME_CHAR_Y = 24
 TIME_CHAR_X1 = 42
@@ -45,11 +44,13 @@ class Display:
         self.web_service_status = self.Web_Service_Off
         self.web_service_message = None
         self.epd = EPD()
-        self._initialize_display()
         self._set_battery_icon
 
+    async def init(self):
+        await self.epd.init()
+        await self._initialize_display()
+
     async def update_time(self, time: DateTime):
-        Profiler.duration("Display", "Display update time start")
         self.hour = f"{time.hour}"
         self.minute = f"{time.minute:02}"
         self.second = f"{time.second:02}"
@@ -79,10 +80,10 @@ class Display:
             return
         await self._clock_mode_handler(self.CONFIG.get_clock_settings().clock_display_mode)
 
-    def _initialize_display(self):
-        self.epd.Clear(0xff)
+    async def _initialize_display(self):
+        await self.epd.Clear(0xff)
         self.epd.fill(0xff)
-        self.epd.display(self.epd.buffer)
+        await self.epd.display(self.epd.buffer)
 
     def _set_battery_icon(self, percentage: int):
         if percentage == 0 :
@@ -110,7 +111,7 @@ class Display:
 
     async def _mode_full_12h(self):
         self.epd.reset()
-        self.epd.init()
+        await self.epd.init()
         self.epd.fill(0xff)
         if self.lower_power:
             write_icon(self.epd, ICONS_80,"BATTERY_0", TIME_CHAR_X1, TIME_CHAR_Y, 248)
@@ -121,11 +122,10 @@ class Display:
             await self._write_time()
             await self._write_date()
             await self._write_web_service()
-        self.epd.display(self.epd.buffer)
+        await self.epd.display(self.epd.buffer)
         self.epd.sleep()
 
     async def _mode_partial_12h(self):
-        Profiler.duration("Display", "partial start")
         # self.epd.reset()
         # self.epd.init()
         self.epd.fill(0xff)
@@ -135,28 +135,22 @@ class Display:
         else:
             await asyncio.sleep_ms(0)
             await self._write_alarm()
-            Profiler.duration("Display", "write alarm")
             await asyncio.sleep_ms(0)
             await self._write_icons()
-            Profiler.duration("Display", "write icons")
             await asyncio.sleep_ms(0)
             await self._write_time()
-            Profiler.duration("Display", "write time")
             await asyncio.sleep_ms(0)
             await self._write_date()
-            Profiler.duration("Display", "write date")
             await asyncio.sleep_ms(0)
             await self._write_web_service()
-            Profiler.duration("Display", "write web service")
         
         await asyncio.sleep_ms(0)
-        self.epd.display_Partial(self.epd.buffer)
-        Profiler.duration("Display", "Partial End")
+        await self.epd.display_Partial(self.epd.buffer)
         # self.epd.sleep()
 
     async def _mode_debug(self):
         self.epd.reset()
-        self.epd.init()
+        await self.epd.init()
         self.epd.fill(0xff)
         self.epd.text(f"{self.battery_voltage}", 0, 0, 0x00)
         await self._write_alarm()
@@ -164,7 +158,7 @@ class Display:
         await self._write_time()
         await self._write_date()
         await self._write_web_service()
-        self.epd.display(self.epd.buffer)
+        await self.epd.display(self.epd.buffer)
         self.epd.sleep()
 
     clock_mode_handlers = {
