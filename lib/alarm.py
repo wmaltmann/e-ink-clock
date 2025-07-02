@@ -45,13 +45,13 @@ class Alarm:
                 self.AUDIO_PLAYER.update_audio(300, self._next_alarm.ramp if self._next_alarm else False)
                 if self.sleep_noise == NoisePlayer.MODE_BROWN:
                     self.NOISE_PLAYER.enable()
-                self._DISPLAY.update_alarm(self.alarm_enabled, self._next_alarm)
+                temp = self._DISPLAY.update_alarm(self.alarm_enabled, self._next_alarm)
             else:
                 self.alarm_triggered = False
                 self.NOISE_PLAYER.disable()
                 self.TONE_PLAYER.disable()
                 self.AUDIO_PLAYER.disable()
-                self._DISPLAY.update_alarm(self.alarm_enabled, None)
+                temp = self._DISPLAY.update_alarm(self.alarm_enabled, None)
 
     def _load_alarms(self):
         try:

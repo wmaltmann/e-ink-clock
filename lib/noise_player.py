@@ -34,7 +34,7 @@ class NoisePlayer:
             bits=self.bits,
             format=I2S.STEREO,
             rate=self.sample_rate,
-            ibuf=4096
+            ibuf=8192*2
         )
         enable_left = Pin(3, Pin.OUT)
         enable_right = Pin(4, Pin.OUT)
@@ -57,7 +57,7 @@ class NoisePlayer:
                     current_amplitude = self.amplitude
 
                 # Generate brown noise buffer
-                buffer_size = 1024
+                buffer_size = 4096
                 samples = array.array("h")
                 for _ in range(buffer_size):
                     # Brown noise: low-pass filtered white noise
