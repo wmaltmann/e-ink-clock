@@ -2,7 +2,7 @@ import time
 from machine import I2C, Pin
 import ntptime
 from lib.wifi import Wifi
-from lib.datetime import DateTime
+from lib.model.datetime import Datetime
 from lib.config import Config
 from lib.timezone import Timezones
 
@@ -26,10 +26,10 @@ class Clock:
     def get_time(self):
         if self.time_source_sys:  
             t = time.localtime(time.time() + self.timezone_offset)
-            return DateTime(t[0], t[1], t[2], t[3], t[4], t[5], t[6])
+            return Datetime(t[0], t[1], t[2], t[3], t[4], t[5], t[6])
         else:
             t = self._get_rtc_time()
-            return DateTime(t[0], t[1], t[2], t[3], t[4], t[5], t[6])
+            return Datetime(t[0], t[1], t[2], t[3], t[4], t[5], t[6])
 
     def get_time_source(self):
             return self.time_source_sys

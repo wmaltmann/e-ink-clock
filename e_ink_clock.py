@@ -3,7 +3,7 @@ from lib.config import Config
 from lib.wifi import Wifi
 from lib.clock  import Clock
 from lib.display import Display
-from lib.alarm  import Alarm
+from lib.alarms  import Alarms
 from lib.buttons import Buttons
 from lib.nightlight import Nightlight
 from lib.battery import Battery
@@ -11,9 +11,11 @@ from lib.webservice import WebService
 from lib.tone_player import TonePlayer
 from lib.noise_player import NoisePlayer
 from lib.audio_player import AudioPlayer
+from lib.model.display_context import DisplayContext
 
+DISPLAY_CONTEXT = DisplayContext()
 CONFIG = Config()
-DISPLAY = Display(CONFIG)
+DISPLAY = Display(CONFIG, DISPLAY_CONTEXT)
 NIGHTLIGHT = Nightlight()
 BATTERY = Battery()
 WIFI = Wifi(CONFIG)
@@ -21,7 +23,7 @@ CLOCK = Clock(CONFIG, WIFI)
 TONE_PLAYER = TonePlayer()
 AUDIO_PLAYER = AudioPlayer()
 NOISE_PLAYER = NoisePlayer(CONFIG)
-ALARM = Alarm(DISPLAY, CLOCK, TONE_PLAYER, AUDIO_PLAYER, NOISE_PLAYER)
+ALARM = Alarms(DISPLAY, CLOCK, TONE_PLAYER, AUDIO_PLAYER, NOISE_PLAYER)
 WEB_SERVICE = WebService(WIFI, ALARM, DISPLAY)
 BUTTONS = Buttons(NIGHTLIGHT, WEB_SERVICE, NOISE_PLAYER)
 

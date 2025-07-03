@@ -1,4 +1,4 @@
-from lib.alarm import Alarm
+from lib.alarms import Alarms
 
 def parse_query_params(request_line):
     try:
@@ -20,7 +20,7 @@ def parse_query_params(request_line):
     except Exception:
         return {}
 
-def delete_alarm_page(ALARM: Alarm, cl, request):
+def delete_alarm_page(ALARM: Alarms, cl, request):
     request_str = request.decode()
     request_line = request_str.split("\r\n", 1)[0]
     query = parse_query_params(request_line)

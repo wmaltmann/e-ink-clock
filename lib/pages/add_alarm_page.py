@@ -1,4 +1,4 @@
-from lib.alarm_data import AlarmData
+from lib.model.alarm import Alarm
 
 def add_alarm_page(ALARM, cl, request):
     if b"POST /add_alarm" in request:
@@ -21,7 +21,7 @@ def add_alarm_page(ALARM, cl, request):
             # Parse days (checkboxes)
             days = [(f"day{i}" in params) for i in range(7)]
 
-            new_alarm = AlarmData(
+            new_alarm = Alarm(
                 hour=hour,
                 minute=minute,
                 days=days,

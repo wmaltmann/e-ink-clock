@@ -1,7 +1,8 @@
 import uasyncio as asyncio
 from lib.config import Config
-from lib.datetime import DateTime
-from lib.alarm_data import AlarmData
+from lib.model.datetime import Datetime
+from lib.model.alarm import Alarm
+from lib.model.display_context import DisplayContext
 from lib.e2in9 import EPD
 from lib.font import write_font
 from lib.icon import write_icon
@@ -21,16 +22,17 @@ class Display:
     Web_Service_Off = 0
     Web_Service_Connecting = 2
 
-    def __init__(self, CONFIG: Config,
+    def __init__(self, CONFIG: Config, DISPLAY_CONTEXT: DisplayContext,
                  hour: int = 0,
                  minute: int = 0,
                  second: int = 0,
                  am_pm ="xx",
                  alarm_enabled: bool = False,
-                 next_alarm: AlarmData | None = None,
+                 next_alarm: Alarm | None = None,
                  voltage: float = 0.0,
                  percentage: int = 0):
         self.CONFIG = CONFIG
+        self.DISPLAY_CONTEXT = DISPLAY_CONTEXT
         self.hour = f"{hour:02}"
         self.minute = f"{minute:02}"
         self.second = f"{second:02}"
@@ -52,15 +54,15 @@ class Display:
         await self.epd.init()
         await self._initialize_display()
 
-    async def update_time(self, time: DateTime):
+    async def update_time(self, time: Datetime):
         self.hour = f"{time.hour}"
         self.minute = f"{time.minute:02}"
         self.second = f"{time.second:02}"
         self.am_pm = time.am_pm
-        self.date = time.date_string_mixed_suffix()
+        self.date = f" {time.day_long}, {time.month_short} {time.day}"
         await self._update_display()
 
-    async def update_alarm(self, enabled: bool, next_alarm: AlarmData | None = None):
+    async def update_alarm(self, enabled: bool, next_alarm: Alarm | None = None):
         self.alarm_enabled = enabled
         self.next_alarm = next_alarm
         await self._update_display()

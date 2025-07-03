@@ -2,19 +2,18 @@ import ujson
 from machine import Pin
 from lib.display import Display
 from lib.clock import Clock
-from lib.alarm_data import AlarmData
-from lib.datetime import DateTime
+from lib.model.alarm import Alarm
+from lib.model.datetime import Datetime
 from lib.tone_player import TonePlayer
 from lib.noise_player import NoisePlayer
 from lib.audio_player import AudioPlayer
-from lib.config import Config
 
 try:
     from typing import List
 except ImportError:
     pass
 
-class Alarm:
+class Alarms:
     def __init__(self, DISPLAY: Display, CLOCK: Clock, TONE_PLAYER: TonePlayer, AUDIO_PLAYER: AudioPlayer, NOISE_PLAYER: NoisePlayer):
         self._TONE_PLAYER = TONE_PLAYER
         self._AUDIO_PLAYER = AUDIO_PLAYER
@@ -24,7 +23,7 @@ class Alarm:
         self._pin.irq(trigger=Pin.IRQ_FALLING | Pin.IRQ_RISING, handler=self._switch_changed)
         self._CLOCK = CLOCK
         self._DISPLAY = DISPLAY
-        self._alarms = []  # type: list[AlarmData]
+        self._alarms = []  # type: list[Alarm]
         self._file_path = "/alarms.json"
         self._load_alarms()
         self._next_alarm = self._get_next_alarm()
@@ -57,7 +56,7 @@ class Alarm:
         try:
             with open(self._file_path, "r") as f:
                 data = ujson.load(f)
-                self._alarms = [AlarmData(**a) for a in data]
+                self._alarms = [Alarm(**a) for a in data]
                 print(f"Loaded {len(self._alarms)} alarms from file.")
         except (OSError, ValueError):
             print("No alarm file found or file corrupt. Starting with empty alarm list.")
@@ -127,7 +126,7 @@ class Alarm:
 
 
     def add_alarm(self, alarm):
-        if not isinstance(alarm, AlarmData):
+        if not isinstance(alarm, Alarm):
             raise ValueError("alarm must be an AlarmData instance")
         if not hasattr(alarm, 'name'):
             raise ValueError("alarm must have an 'name' property")
@@ -143,7 +142,7 @@ class Alarm:
         return changed
     
     def update_alarm(self, new_alarm):
-        if not isinstance(new_alarm, AlarmData):
+        if not isinstance(new_alarm, Alarm):
             raise ValueError("new_alarm must be an AlarmData instance")
         for i, alarm in enumerate(self._alarms):
             if alarm.name == new_alarm.name:
@@ -166,7 +165,7 @@ class Alarm:
         self._get_next_alarm()
         return self._next_alarm
     
-    def check_alarm(self, now: DateTime):
+    def check_alarm(self, now: Datetime):
         """Check if the current time matches the next alarm."""
         if not self.alarm_enabled or self._next_alarm is None:
             pass
