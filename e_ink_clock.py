@@ -31,7 +31,7 @@ async def clock_task():
     while True:
         now = CLOCK.get_time()
         ALARM.check_alarm(now)
-        await DISPLAY.update_time(now)
+        DISPLAY_CONTEXT.update_time(now)
         sleep_seconds = 60 - now.second
         await asyncio.sleep(sleep_seconds)
 
