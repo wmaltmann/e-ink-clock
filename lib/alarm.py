@@ -7,6 +7,7 @@ from lib.datetime import DateTime
 from lib.tone_player import TonePlayer
 from lib.noise_player import NoisePlayer
 from lib.audio_player import AudioPlayer
+from lib.config import Config
 
 try:
     from typing import List
@@ -15,9 +16,9 @@ except ImportError:
 
 class Alarm:
     def __init__(self, DISPLAY: Display, CLOCK: Clock, TONE_PLAYER: TonePlayer, AUDIO_PLAYER: AudioPlayer, NOISE_PLAYER: NoisePlayer):
-        self.TONE_PLAYER = TONE_PLAYER
-        self.AUDIO_PLAYER = AUDIO_PLAYER
-        self.NOISE_PLAYER = NOISE_PLAYER
+        self._TONE_PLAYER = TONE_PLAYER
+        self._AUDIO_PLAYER = AUDIO_PLAYER
+        self._NOISE_PLAYER = NOISE_PLAYER
         self._pin = Pin(22, Pin.IN, Pin.PULL_UP)
         self.alarm_enabled = self._pin.value() == 0
         self._pin.irq(trigger=Pin.IRQ_FALLING | Pin.IRQ_RISING, handler=self._switch_changed)
@@ -35,21 +36,21 @@ class Alarm:
             self.alarm_enabled = pin.value() == 0
             if self.alarm_enabled:    
                 self._next_alarm = self._get_next_alarm()
-                self.TONE_PLAYER.update_tone(self._next_alarm.frequency if self._next_alarm else 500,
+                self._TONE_PLAYER.update_tone(self._next_alarm.frequency if self._next_alarm else 500,
                                              300,
                                              32767 // 4,
                                              50,
                                              1.0,
                                              self._next_alarm.ramp if self._next_alarm else False)
-                self.AUDIO_PLAYER.update_audio(300, self._next_alarm.ramp if self._next_alarm else False)
-                if self.NOISE_PLAYER.mode == NoisePlayer.MODE_BROWN:
-                    self.NOISE_PLAYER.enable()
+                self._AUDIO_PLAYER.update_audio(300, self._next_alarm.ramp if self._next_alarm else False)
+                if self._NOISE_PLAYER.mode == NoisePlayer.MODE_BROWN:
+                    self._NOISE_PLAYER.enable()
                 temp = self._DISPLAY.update_alarm(self.alarm_enabled, self._next_alarm)
             else:
                 self.alarm_triggered = False
-                self.NOISE_PLAYER.disable()
-                self.TONE_PLAYER.disable()
-                self.AUDIO_PLAYER.disable()
+                self._NOISE_PLAYER.disable()
+                self._TONE_PLAYER.disable()
+                self._AUDIO_PLAYER.disable()
                 temp = self._DISPLAY.update_alarm(self.alarm_enabled, None)
 
     def _load_alarms(self):
@@ -176,8 +177,8 @@ class Alarm:
 
                 self.alarm_triggered = True
                 if self._next_alarm.tone:
-                    self.TONE_PLAYER.enable()
+                    self._TONE_PLAYER.enable()
                     print(f"Alarm '{self._next_alarm.name}' tone triggered!")
                 elif self._next_alarm.audio:
-                    self.AUDIO_PLAYER.enable()
+                    self._AUDIO_PLAYER.enable()
                     print(f"Alarm '{self._next_alarm.name}' audio triggered!")

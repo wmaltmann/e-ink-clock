@@ -14,6 +14,7 @@ TIME_CHAR_Y = 24
 TIME_CHAR_X1 = 42
 BATTERY_ICON_X = 268
 WIFI_ICON_X = 230
+NOISE_ICON_X = 192
 
 class Display:
     Web_Service_On = 1
@@ -43,6 +44,7 @@ class Display:
         self.battery_icon = "BATTERY_100"
         self.web_service_status = self.Web_Service_Off
         self.web_service_message = None
+        self.noise_mode = "None"
         self.epd = EPD()
         self._set_battery_icon
 
@@ -63,9 +65,16 @@ class Display:
         self.next_alarm = next_alarm
         await self._update_display()
 
+    async def update_noise_mode(self, mode: str):
+        if mode in ["Brown", "None"]:
+            self.noise_mode = mode
+            await self._update_display()
+        else:
+            print(f"Invalid noise mode: {mode}.")
+
     async def update_web_service(self, state, message: str | None = None):
         if state not in (self.Web_Service_On, self.Web_Service_Off, self.Web_Service_Connecting):
-            raise ValueError("Invalid webservice state")
+            print("Invalid webservice state")
         self.web_service_status = state
         self.web_service_message = message
         await self._update_display()
@@ -191,6 +200,9 @@ class Display:
         self.epd.text(alarm_text, alarm_offset + 4, 8, 0)
     
     async def _write_icons(self):
+        if self.noise_mode == "Brown":
+            write_icon(self.epd, ICONS_24, "WAVE", NOISE_ICON_X, 0, 0)
+        await asyncio.sleep(0)
         write_icon(self.epd, ICONS_24, self.battery_icon, BATTERY_ICON_X, 0, 0)
 
     async def _write_time(self):
