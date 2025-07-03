@@ -1,3 +1,4 @@
+import asyncio
 import framebuf
 import utime
 from machine import Pin, SPI
@@ -76,6 +77,17 @@ Gray4 = [
 0x22,	0x17,	0x41,	0xAE,	0x32,	0x28		
 ]	
 
+def reverse_bits(b):
+    r = 0
+    for i in range(8):
+        r = (r << 1) | (b & 1)
+        b >>= 1
+    return r
+
+BIT_REVERSE_TABLE = [reverse_bits(i) for i in range(256)]
+
+def flip_byte(byte):
+    return BIT_REVERSE_TABLE[byte]    
 
 class EPD(framebuf.FrameBuffer):
     def __init__(self):
@@ -85,18 +97,13 @@ class EPD(framebuf.FrameBuffer):
         self.cs_pin = Pin(CS_PIN, Pin.OUT)
         self.width = EPD_WIDTH
         self.height = EPD_HEIGHT
-
-        
         self.partial_lut = WF_PARTIAL_2IN9
         self.full_lut = WS_20_30
-        
         self.spi = SPI(1)
         self.spi.init(baudrate=4000_000)
         self.dc_pin = Pin(DC_PIN, Pin.OUT)
-        
         self.buffer = bytearray(self.height * self.width // 8)
         super().__init__(self.buffer, self.height, self.width, framebuf.MONO_VLSB)
-        self.init()
 
     def digital_write(self, pin, value):
         pin.value(value)
@@ -140,29 +147,29 @@ class EPD(framebuf.FrameBuffer):
         self.spi.write(bytearray(buf))
         self.digital_write(self.cs_pin, 1)
         
-    def ReadBusy(self):
+    async def ReadBusy(self):
         while(self.digital_read(self.busy_pin) == 1):      #  0: idle, 1: busy
-            self.delay_ms(10) 
+            await asyncio.sleep_ms(10)
 
-    def TurnOnDisplay(self):
+    async def TurnOnDisplay(self):
         self.send_command(0x22) # DISPLAY_UPDATE_CONTROL_2
         self.send_data(0xC7)
         self.send_command(0x20) # MASTER_ACTIVATION
-        self.ReadBusy()
+        await self.ReadBusy()
 
-    def TurnOnDisplay_Partial(self):
+    async def TurnOnDisplay_Partial(self):
         self.send_command(0x22) # DISPLAY_UPDATE_CONTROL_2
         self.send_data(0x0F)
         self.send_command(0x20) # MASTER_ACTIVATION
-        self.ReadBusy()
+        await self.ReadBusy()
 
-    def lut(self, lut):
+    async def lut(self, lut):
         self.send_command(0x32)
         self.send_data1(lut[0:153])
-        self.ReadBusy()
+        await self.ReadBusy()
 
-    def SetLut(self, lut):
-        self.lut(lut)
+    async def SetLut(self, lut):
+        await self.lut(lut)
         self.send_command(0x3f)
         self.send_data(lut[153])
         self.send_command(0x03)     # gate voltage
@@ -185,22 +192,21 @@ class EPD(framebuf.FrameBuffer):
         self.send_data(y_end & 0xFF)
         self.send_data((y_end >> 8) & 0xFF)
 
-    def SetCursor(self, x, y):
+    async def SetCursor(self, x, y):
         self.send_command(0x4E) # SET_RAM_X_ADDRESS_COUNTER
         self.send_data(x & 0xFF)
         
         self.send_command(0x4F) # SET_RAM_Y_ADDRESS_COUNTER
         self.send_data(y & 0xFF)
         self.send_data((y >> 8) & 0xFF)
-        self.ReadBusy()
+        await self.ReadBusy()
         
-    def init(self):
-        # EPD hardware init start     
+    async def init(self):   
         self.reset()
 
-        self.ReadBusy()   
+        await self.ReadBusy()   
         self.send_command(0x12)  #SWRESET
-        self.ReadBusy()   
+        await self.ReadBusy()   
 
         self.send_command(0x01) #Driver output control      
         self.send_data(0x27)
@@ -216,48 +222,27 @@ class EPD(framebuf.FrameBuffer):
         self.send_data(0x00)
         self.send_data(0x80)
     
-        self.SetCursor(0, 0)
-        self.ReadBusy()
+        await self.SetCursor(0, 0)
+        await self.ReadBusy()
 
-        self.SetLut(self.full_lut)
-        # EPD hardware init end
+        await self.SetLut(self.full_lut)
         return 0
 
-    def display(self, image):
+    async def display(self, image):
         if image is None:
             return
         self.send_command(0x24)  # WRITE_RAM
-        for j in range(0, int(self.width / 8)):  # reversed horizontal bytes
-            for i in range(self.height - 1, -1, -1):  # reversed vertical
-                index = (self.height - 1 - i) + (int(self.width / 8) - 1 - j) * self.height
-                self.send_data(image[index])
-        self.TurnOnDisplay()
+        for j in range(0, int(self.width / 8)):          # left to right
+            for i in range(self.height - 1, -1, -1):      # bottom to top
+                self.send_data(flip_byte(image[i + j * self.height]))
+        await self.TurnOnDisplay()
 
-
-    def display_Base(self, image):
-        if (image == None):
-            return   
-        self.send_command(0x24) # WRITE_RAM
-        for j in range(int(self.width / 8) - 1, -1, -1):
-            for i in range(0, self.height):
-                self.send_data(image[i + j * self.height])    
-                
-        self.send_command(0x26) # WRITE_RAM
-        for j in range(int(self.width / 8) - 1, -1, -1):
-            for i in range(0, self.height):
-                self.send_data(image[i + j * self.height])      
-                
-        self.TurnOnDisplay()
-
-    def display_Partial(self):
-        image = self.buffer
-
+    async def display_Partial(self, image):
         self.digital_write(self.reset_pin, 0)
         self.delay_ms(2)
         self.digital_write(self.reset_pin, 1)
         self.delay_ms(2)   
-        
-        self.SetLut(self.partial_lut)
+        await self.SetLut(self.partial_lut)
         self.send_command(0x37) 
         self.send_data(0x00)  
         self.send_data(0x00)  
@@ -269,30 +254,29 @@ class EPD(framebuf.FrameBuffer):
         self.send_data(0x00)   
         self.send_data(0x00)  
         self.send_data(0x00)
-
         self.send_command(0x3C) #BorderWaveform
         self.send_data(0x80)
 
         self.send_command(0x22) 
         self.send_data(0xC0)   
         self.send_command(0x20) 
-        self.ReadBusy()
+        await self.ReadBusy()
 
         self.SetWindow(0, 0, self.width - 1, self.height - 1)
-        self.SetCursor(0, 0)
-        
-        self.send_command(0x24) # WRITE_RAM
-        for j in range(int(self.width / 8) - 1, -1, -1):
-            for i in range(0, self.height):
-                self.send_data(image[i + j * self.height])    
-        self.TurnOnDisplay_Partial()
+        await self.SetCursor(0, 0)
+        self.send_command(0x24)
+        for j in range(0, int(self.width / 8)):
+            for i in range(self.height - 1, -1, -1):
+                self.send_data(flip_byte(image[i + j * self.height])) 
+            await asyncio.sleep_ms(0)
+        await self.TurnOnDisplay_Partial()
 
-    def Clear(self, color):
+    async def Clear(self, color):
         self.send_command(0x24) # WRITE_RAM
         self.send_data1([color] * self.height * int(self.width / 8))
         self.send_command(0x26) # WRITE_RAM
         self.send_data1([color] * self.height * int(self.width / 8))
-        self.TurnOnDisplay()
+        await self.TurnOnDisplay()
 
     def sleep(self):
         self.send_command(0x10) # DEEP_SLEEP_MODE

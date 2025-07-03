@@ -7,8 +7,13 @@ class Wifi:
         self.wlan = network.WLAN(network.STA_IF)
         self.wlan.active(False)
         self.CONFIG = CONFIG
+        self.set_hostname(self.CONFIG.get_network_settings().wifi_hostname)
     
-
+    def set_hostname(self, hostname: str):
+        if hostname:
+            self.wlan.config(hostname=hostname)
+            print(f"Hostname set to: {hostname}")
+    
     def connect(self, timeout: int = 30) -> bool:
         self.wlan.active(True)
         if self.is_connected():
@@ -29,12 +34,15 @@ class Wifi:
         return False
 
     def disconnect(self):
+        if self.wlan.isconnected():
+            self.wlan.disconnect()   # <-- Properly disconnect first
         if self.wlan.active():
             self.wlan.active(False)
-            print("Wi-Fi interface disabled")
+        print("Wi-Fi interface disabled")
+
 
     def is_connected(self) -> bool:
         return self.wlan.isconnected()
 
     def ifconfig(self):
-        return self.wlan.ifconfig() if self.is_connected() else None
+        return self.wlan.ifconfig() if self.is_connected() else ""
