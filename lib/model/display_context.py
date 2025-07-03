@@ -25,7 +25,9 @@ class DisplayContext:
         self.battery_voltage = 0.0
         self.battery_percentage = 0
         self.web_service_status = ""
-        self.web_service_message = ""
+        self.message_enabled = False
+        self.message_text = ""
+        self.noise_player_mode = "None"
 
         self._subscribers: list = []
 
@@ -122,7 +124,19 @@ class DisplayContext:
         if state is not None and state != self.web_service_status:
             self.web_service_status = state
             changed.add("web_service_status")
-        if message is not None and message != self.web_service_message:
-            self.web_service_message = message
+        if message is not None and message != self.message_text:
+            if message is "":
+                self.message_enabled = False
+                self.message_text = ""
+            else:
+                self.message_enabled
+                self.message_text = message
             changed.add("web_service_message")
+        self._notify_subscribers(changed)
+
+    def update_noise_player(self, mode: str):
+        changed = set()
+        if mode != self.noise_player_mode:
+            self.noise_player_mode = mode
+            changed.add("noise_player_mode")
         self._notify_subscribers(changed)

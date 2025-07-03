@@ -3,6 +3,7 @@ from lib.config import Config
 from lib.model.datetime import Datetime
 from lib.model.alarm import Alarm
 from lib.model.display_context import DisplayContext
+from lib.webservice import WebService
 from lib.e2in9 import EPD
 from lib.font import write_font
 from lib.icon import write_icon
@@ -18,9 +19,6 @@ WIFI_ICON_X = 230
 NOISE_ICON_X = 192
 
 class Display:
-    Web_Service_On = 1
-    Web_Service_Off = 0
-    Web_Service_Connecting = 2
 
     def __init__(self, CONFIG: Config, DISPLAY_CONTEXT: DisplayContext,
                  hour: int = 0,
@@ -28,9 +26,7 @@ class Display:
                  second: int = 0,
                  am_pm ="xx",
                  alarm_enabled: bool = False,
-                 next_alarm: Alarm | None = None,
-                 voltage: float = 0.0,
-                 percentage: int = 0):
+                 next_alarm: Alarm | None = None):
         self.CONFIG = CONFIG
         self.DISPLAY_CONTEXT = DISPLAY_CONTEXT
         self.hour = f"{hour:02}"
@@ -41,15 +37,9 @@ class Display:
         self.next_alarm = next_alarm
         self.lower_power = False
         self.lower_power_latch = False
-        self.battery_voltage = voltage
-        self.battery_percentage = percentage
-        self.battery_icon = "BATTERY_100"
-        self.web_service_status = self.Web_Service_Off
-        self.web_service_message = None
-        self.noise_mode = "None"
         self.epd = EPD()
-        self._set_battery_icon
-
+        self.DISPLAY_CONTEXT.subscribe(self._display_updater)
+    
     async def init(self):
         await self.epd.init()
         await self._initialize_display()
@@ -67,25 +57,6 @@ class Display:
         self.next_alarm = next_alarm
         await self._update_display()
 
-    async def update_noise_mode(self, mode: str):
-        if mode in ["Brown", "None"]:
-            self.noise_mode = mode
-            await self._update_display()
-        else:
-            print(f"Invalid noise mode: {mode}.")
-
-    async def update_web_service(self, state, message: str | None = None):
-        if state not in (self.Web_Service_On, self.Web_Service_Off, self.Web_Service_Connecting):
-            print("Invalid webservice state")
-        self.web_service_status = state
-        self.web_service_message = message
-        await self._update_display()
-
-    def update_battery(self, voltage: float, percentage: int):
-        self.battery_voltage = voltage
-        self.battery_percentage = percentage
-        self._set_battery_icon(percentage)
-
     async def _update_display(self):
         if self.lower_power_latch:
             return
@@ -96,29 +67,6 @@ class Display:
         self.epd.fill(0xff)
         await self.epd.display(self.epd.buffer)
 
-    def _set_battery_icon(self, percentage: int):
-        if percentage == 0 :
-            self.battery_icon = "BATTERY_0"
-            self.lower_power = True
-        elif percentage <= 20:
-            self.battery_icon = "BATTERY_0"
-            self.lower_power = False
-            self.lower_power_latch = False
-        elif percentage <= 50:
-            self.battery_icon = "BATTERY_25"
-            self.lower_power = False
-            self.lower_power_latch = False
-        elif percentage <= 60:
-            self.battery_icon = "BATTERY_50"
-            self.lower_power = False
-            self.lower_power_latch = False
-        elif percentage <= 80:
-            self.battery_icon = "BATTERY_75"
-            self.lower_power = False
-            self.lower_power_latch = False
-        else:
-            self.battery_icon = "BATTERY_100"
-            self.lower_power_latch = False
 
     async def _mode_full_12h(self):
         self.epd.reset()
@@ -129,10 +77,8 @@ class Display:
             self.lower_power_latch = True
         else:
             await self._write_alarm()
-            await self._write_icons()
             await self._write_time()
             await self._write_date()
-            await self._write_web_service()
         await self.epd.display(self.epd.buffer)
         self.epd.sleep()
 
@@ -147,13 +93,11 @@ class Display:
             await asyncio.sleep_ms(0)
             await self._write_alarm()
             await asyncio.sleep_ms(0)
-            await self._write_icons()
             await asyncio.sleep_ms(0)
             await self._write_time()
             await asyncio.sleep_ms(0)
             await self._write_date()
             await asyncio.sleep_ms(0)
-            await self._write_web_service()
         
         await asyncio.sleep_ms(0)
         await self.epd.display_Partial(self.epd.buffer)
@@ -163,12 +107,10 @@ class Display:
         self.epd.reset()
         await self.epd.init()
         self.epd.fill(0xff)
-        self.epd.text(f"{self.battery_voltage}", 0, 0, 0x00)
+        self.epd.text(f"{self.DISPLAY_CONTEXT.battery_voltage}", 0, 0, 0x00)
         await self._write_alarm()
-        await self._write_icons()
         await self._write_time()
         await self._write_date()
-        await self._write_web_service()
         await self.epd.display(self.epd.buffer)
         self.epd.sleep()
 
@@ -199,13 +141,7 @@ class Display:
             days = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]
             next_active_day = "" if self.next_alarm.next_active_day is None else days[self.next_alarm.next_active_day]
             alarm_text = f"{next_active_day} {self.next_alarm.hour_12}:{self.next_alarm.minute:02} {self.next_alarm.am_pm}"
-        self.epd.text(alarm_text, alarm_offset + 4, 8, 0)
-    
-    async def _write_icons(self):
-        if self.noise_mode == "Brown":
-            write_icon(self.epd, ICONS_24, "WAVE", NOISE_ICON_X, 0, 0)
-        await asyncio.sleep(0)
-        write_icon(self.epd, ICONS_24, self.battery_icon, BATTERY_ICON_X, 0, 0)
+        self.epd.text(alarm_text, alarm_offset + 4, 8, 0)     
 
     async def _write_time(self):
         if int(self.hour) > 9 :
@@ -214,14 +150,42 @@ class Display:
 
         await write_font(self.epd, FRANKLIN_18_PRE, f"{self.am_pm}", time_offset + 4, TIME_CHAR_Y + 64 , 24)
     
-    async def _write_web_service(self):
-        if self.web_service_status == self.Web_Service_Connecting:
-            write_icon(self.epd, ICONS_24,"WIFI_CONFIG", WIFI_ICON_X, 0, 0)
-        elif self.web_service_status == self.Web_Service_On:
-            write_icon(self.epd, ICONS_24,"WIFI_ON", WIFI_ICON_X, 0, 0)
-        if(self.web_service_message is not None):
-            self.epd.text(self.web_service_message, 100, 112, 0)
-    
     async def _write_date(self):
-        if self.web_service_message is None:
             await write_font(self.epd, FRANKLIN_18_PRE, f"{self.date}", 0, 110, 296)
+
+#----------------- Asynchronous Drawing Methods -----------------
+
+    def _display_updater(self, changes : set[str]):
+        print(f"Display update requested with changes: {changes}")
+        if "battery_icon" in changes:
+            asyncio.create_task(self._draw_battery_icon())
+        if "noise_player_mode" in changes:
+            asyncio.create_task(self._draw_noise_icon())
+        if "web_service_status" in changes:
+            asyncio.create_task(self._draw_web_service_icon())
+
+    async def _draw_battery_icon(self):
+        await asyncio.sleep_ms(0)
+        write_icon(self.epd, ICONS_24, self.DISPLAY_CONTEXT.battery_icon, BATTERY_ICON_X, 0, 0)
+        await asyncio.sleep_ms(0)
+        await self.epd.display_Partial(self.epd.buffer)
+
+    async def _draw_noise_icon(self):
+        await asyncio.sleep_ms(0)
+        if self.DISPLAY_CONTEXT.noise_player_mode == "Brown":
+            write_icon(self.epd, ICONS_24, "WAVE", NOISE_ICON_X, 0, 0)
+        else:
+            self.epd.fill_rect(NOISE_ICON_X, 0, 24, 24, 0xff)
+        await asyncio.sleep_ms(0)
+        await self.epd.display_Partial(self.epd.buffer)
+
+    async def _draw_web_service_icon(self):
+        await asyncio.sleep_ms(0)
+        if self.DISPLAY_CONTEXT.web_service_status == WebService.WEB_SERVICE_CONNECTING:
+            write_icon(self.epd, ICONS_24, "WIFI_CONFIG", WIFI_ICON_X, 0, 0)
+        elif self.DISPLAY_CONTEXT.web_service_status == WebService.WEB_SERVICE_ON:
+            write_icon(self.epd, ICONS_24, "WIFI_ON", WIFI_ICON_X, 0, 0)
+        else:
+            self.epd.fill_rect(WIFI_ICON_X, 0, 24, 24, 0xff)
+        await asyncio.sleep_ms(0)
+        await self.epd.display_Partial(self.epd.buffer)

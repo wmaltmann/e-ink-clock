@@ -1,6 +1,6 @@
 import ujson
 from machine import Pin
-from lib.display import Display
+from lib.model.display_context import DisplayContext
 from lib.clock import Clock
 from lib.model.alarm import Alarm
 from lib.model.datetime import Datetime
@@ -14,7 +14,7 @@ except ImportError:
     pass
 
 class Alarms:
-    def __init__(self, DISPLAY: Display, CLOCK: Clock, TONE_PLAYER: TonePlayer, AUDIO_PLAYER: AudioPlayer, NOISE_PLAYER: NoisePlayer):
+    def __init__(self, display_context: DisplayContext, CLOCK: Clock, TONE_PLAYER: TonePlayer, AUDIO_PLAYER: AudioPlayer, NOISE_PLAYER: NoisePlayer):
         self._TONE_PLAYER = TONE_PLAYER
         self._AUDIO_PLAYER = AUDIO_PLAYER
         self._NOISE_PLAYER = NOISE_PLAYER
@@ -22,7 +22,7 @@ class Alarms:
         self.alarm_enabled = self._pin.value() == 0
         self._pin.irq(trigger=Pin.IRQ_FALLING | Pin.IRQ_RISING, handler=self._switch_changed)
         self._CLOCK = CLOCK
-        self._DISPLAY = DISPLAY
+        self._DISPLAY_CONTEXT = display_context
         self._alarms = []  # type: list[Alarm]
         self._file_path = "/alarms.json"
         self._load_alarms()
@@ -44,13 +44,13 @@ class Alarms:
                 self._AUDIO_PLAYER.update_audio(300, self._next_alarm.ramp if self._next_alarm else False)
                 if self._NOISE_PLAYER.mode == NoisePlayer.MODE_BROWN:
                     self._NOISE_PLAYER.enable()
-                temp = self._DISPLAY.update_alarm(self.alarm_enabled, self._next_alarm)
+                #temp = self._DISPLAY.update_alarm(self.alarm_enabled, self._next_alarm)
             else:
                 self.alarm_triggered = False
                 self._NOISE_PLAYER.disable()
                 self._TONE_PLAYER.disable()
                 self._AUDIO_PLAYER.disable()
-                temp = self._DISPLAY.update_alarm(self.alarm_enabled, None)
+                #temp = self._DISPLAY.update_alarm(self.alarm_enabled, None)
 
     def _load_alarms(self):
         try:

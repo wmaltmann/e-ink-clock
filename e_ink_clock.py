@@ -22,9 +22,9 @@ WIFI = Wifi(CONFIG)
 CLOCK = Clock(CONFIG, WIFI)
 TONE_PLAYER = TonePlayer()
 AUDIO_PLAYER = AudioPlayer()
-NOISE_PLAYER = NoisePlayer(CONFIG)
-ALARM = Alarms(DISPLAY, CLOCK, TONE_PLAYER, AUDIO_PLAYER, NOISE_PLAYER)
-WEB_SERVICE = WebService(WIFI, ALARM, DISPLAY)
+NOISE_PLAYER = NoisePlayer(CONFIG, DISPLAY_CONTEXT)
+ALARM = Alarms(DISPLAY_CONTEXT, CLOCK, TONE_PLAYER, AUDIO_PLAYER, NOISE_PLAYER)
+WEB_SERVICE = WebService(WIFI, ALARM, DISPLAY_CONTEXT)
 BUTTONS = Buttons(NIGHTLIGHT, WEB_SERVICE, NOISE_PLAYER)
 
 async def clock_task():
@@ -38,7 +38,7 @@ async def clock_task():
 async def battery_monitor_task():
     while True:
         BATTERY.read()
-        DISPLAY.update_battery(BATTERY.voltage, BATTERY.percentage)
+        DISPLAY_CONTEXT.update_battery(BATTERY.voltage, BATTERY.percentage)
         await asyncio.sleep(3600)
 
 async def main():

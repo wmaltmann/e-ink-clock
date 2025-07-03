@@ -4,7 +4,7 @@ import time
 import uasyncio as asyncio
 import random
 from lib.config import Config
-from lib.display import Display
+from lib.model.display_context import DisplayContext
 
 class NoisePlayer():
     MODE_BROWN = "Brown"
@@ -13,10 +13,11 @@ class NoisePlayer():
 
     AMPLITUDE_MAX = 32767  # Max 16-bit signed int
 
-    def __init__(self, CONFIG: Config , DISPLAY = Display, volume_percent=25, ramp=False):
+    def __init__(self, CONFIG: Config , display_context: DisplayContext, volume_percent=25, ramp=False):
         self._CONFIG = CONFIG
-        self._DISPLAY = DISPLAY
+        self._DISPLAY_CONTEXT = display_context
         self.mode = CONFIG.clock.noise_mode
+        self._DISPLAY_CONTEXT.update_noise_player(self.mode)
         self.volume_percent = self._clamp_percent(volume_percent)
         self.ramp = ramp
         self.sample_rate = 8000
@@ -108,10 +109,10 @@ class NoisePlayer():
         if ramp is not None:
             self.ramp = ramp
 
-    def set_mode(self, mode):
+    def set_mode(self, mode: str):
         if mode in self.MODES:
             self.mode = mode
             self._CONFIG.update_noise_mode(mode)
-            print(f"Noise mode set to: {mode}")
+            self._DISPLAY_CONTEXT.update_noise_player(mode)
         else:
             print(f"Invalid noise mode: {mode}. Valid modes are: {self.MODES}")
