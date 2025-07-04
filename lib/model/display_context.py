@@ -3,18 +3,18 @@ from lib.model.alarm import Alarm
 
 class DisplayContext:
     def __init__(self) -> None:
-        self.time_hour_d1 = "0"
-        self.time_hour_d2 = "0"
-        self.time_minute_d1 = "0"
-        self.time_minute_d2 = "0"
-        self.time_second_d1 = "0"
-        self.time_second_d2 = "0"
+        self.time_hour_d1 = ""
+        self.time_hour_d2 = ""
+        self.time_minute_d1 = ""
+        self.time_minute_d2 = ""
+        self.time_second_d1 = ""
+        self.time_second_d2 = ""
         self.time_am_pm = "AM"
         self.time_day = "1"
         self.time_day_short = "Mon"
         self.time_day_long = "Monday"
         self.time_day_suffix = "st"
-        self.time_month = "0"
+        self.time_month = "_"
         self.time_month_short = "Jan"
         self.time_month_long = "January"
         self.time_date = "1"
@@ -23,7 +23,7 @@ class DisplayContext:
         self.alarm_next = None
         self.battery_icon = "BATTERY_0"
         self.battery_voltage = 0.0
-        self.battery_percentage = 0
+        self.battery_percentage = -1
         self.web_service_status = ""
         self.message_enabled = False
         self.message_text = ""
@@ -83,7 +83,6 @@ class DisplayContext:
         if self.time_day_suffix != time.date_suffix:
             self.time_day_suffix = time.date_suffix
             changed.add("time_day_suffix")
-            
         self._notify_subscribers(changed)
 
     def update_alarm(self, enabled: bool, next_alarm: Alarm | None):

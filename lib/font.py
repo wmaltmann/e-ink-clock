@@ -26,7 +26,7 @@ async def write_font(fb: framebuf.FrameBuffer, font, text, x_offset, y_offset, w
                 # Draw pixel: 0x00 for set (black), 0xFF for unset (white)
                 fb.pixel(x + dx, y + y_offset, 0x00 if bit else 0xFF)
                 bit_index += 1
-        await asyncio.sleep_ms(0)
+        await asyncio.sleep_ms(2)
         x += char_width  # move x for next character
 
 

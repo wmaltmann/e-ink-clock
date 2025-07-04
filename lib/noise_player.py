@@ -13,7 +13,7 @@ class NoisePlayer():
 
     AMPLITUDE_MAX = 32767  # Max 16-bit signed int
 
-    def __init__(self, CONFIG: Config , display_context: DisplayContext, volume_percent=25, ramp=False):
+    def __init__(self, CONFIG: Config , display_context: DisplayContext, volume_percent=6, ramp=False):
         self._CONFIG = CONFIG
         self._DISPLAY_CONTEXT = display_context
         self.mode = CONFIG.clock.noise_mode
@@ -49,7 +49,7 @@ class NoisePlayer():
             bits=self.bits,
             format=I2S.STEREO,
             rate=self.sample_rate,
-            ibuf=8192
+            ibuf=8192*2
         )
         enable_left = Pin(3, Pin.OUT)
         enable_right = Pin(4, Pin.OUT)
@@ -71,7 +71,7 @@ class NoisePlayer():
 
                 volume_scale = self._clamp_percent(ramp_volume) / 100
 
-                buffer_size = 2048
+                buffer_size = 4096
                 samples = array.array("h")
 
                 for _ in range(buffer_size):
