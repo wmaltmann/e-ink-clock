@@ -1,4 +1,4 @@
-class AlarmData:
+class Alarm:
     def __init__(self,
                  hour: int,
                  minute: int,

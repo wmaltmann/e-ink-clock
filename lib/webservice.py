@@ -1,9 +1,8 @@
-import os
 import socket
 import uasyncio as asyncio
 from lib.wifi import Wifi
-from lib.alarm import Alarm
-from lib.display import Display
+from lib.alarms import Alarms
+from lib.model.display_context import DisplayContext
 from lib.pages.view_alarms_page import view_alarms_page
 from lib.pages.add_alarm_page import add_alarm_page
 from lib.pages.update_alarm_page import update_alarm_page
@@ -12,13 +11,23 @@ from lib.pages.not_found import not_found_page
 from lib.pages.delete_alarm_page import delete_alarm_page
 
 class WebService:
-    def __init__(self, WIFI: Wifi, ALARM: Alarm, DISPLAY: Display):
+    WEB_SERVICE_ON = "On"
+    WEB_SERVICE_OFF = "Off"
+    WEB_SERVICE_CONNECTING = "Connecting"
+    WEB_SERVICE_STATUS = [
+        WEB_SERVICE_ON,
+        WEB_SERVICE_OFF,
+        WEB_SERVICE_CONNECTING
+    ]
+
+
+    def __init__(self, WIFI: Wifi, ALARM: Alarms, display_context: DisplayContext):
         self.enabled = False
         self._running = True
         self._server_socket = None
         self._ALARM = ALARM
         self._WIFI = WIFI
-        self._DISPLAY = DISPLAY
+        self._DISPLAY_CONTEXT = display_context
 
     async def run(self):
         while self._running:
@@ -29,7 +38,7 @@ class WebService:
 
     def enable(self):
         if not self.enabled:
-            self._DISPLAY.update_web_service(self._DISPLAY.Web_Service_Connecting)
+            #self._DISPLAY_CONTEXT.update_web_service(self.WEB_SERVICE_CONNECTING)
             self._WIFI.connect()
             self.enabled = True
             
@@ -50,7 +59,7 @@ class WebService:
         self._server_socket.bind(addr)
         self._server_socket.listen(1)
         print("Web server running")
-        self._DISPLAY.update_web_service(self._DISPLAY.Web_Service_On, self._WIFI.ifconfig()[0])
+        self._DISPLAY_CONTEXT.update_web_service(self.WEB_SERVICE_ON, self._WIFI.ifconfig()[0])
 
         while self.enabled:
             try:
@@ -93,7 +102,7 @@ class WebService:
             self._server_socket = None
             print("Web server stopped")
         self._WIFI.disconnect()
-        self._DISPLAY.update_web_service(self._DISPLAY.Web_Service_Off)
+        self._DISPLAY_CONTEXT.update_web_service(self.WEB_SERVICE_OFF,"")
 
     def http_response(self, cl, body, code=200):
         cl.send(f"HTTP/1.1 {code} OK\r\nContent-Type: text/html\r\n\r\n")

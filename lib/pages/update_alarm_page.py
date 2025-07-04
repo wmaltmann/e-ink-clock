@@ -1,5 +1,5 @@
-from lib.alarm_data import AlarmData
-from lib.alarm import Alarm
+from lib.model.alarm import Alarm
+from lib.alarms import Alarms
 
 def unescape_text(text):
     result = ""
@@ -49,7 +49,7 @@ def parse_form_data(body):
             params[key] = value.replace("+", " ")
     return params
 
-def update_alarm_page(ALARM: Alarm , cl, request):
+def update_alarm_page(ALARM: Alarms , cl, request):
     request_str = request.decode()
     request_line = request_str.split("\r\n", 1)[0]
     query = parse_query_params(request_line)
@@ -70,7 +70,7 @@ def update_alarm_page(ALARM: Alarm , cl, request):
             body = request_str.split("\r\n\r\n", 1)[1]
             params = parse_form_data(body)
 
-            updated_alarm = AlarmData(
+            updated_alarm = Alarm(
                 hour=int(params.get("hour", 0)),
                 minute=int(params.get("minute", 0)),
                 days=[(f"day{i}" in params) for i in range(7)],

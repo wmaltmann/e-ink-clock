@@ -1,6 +1,6 @@
-from lib.alarm import Alarm
+from lib.alarms import Alarms
 
-def view_alarms_page(ALARM: Alarm, cl, request):
+def view_alarms_page(ALARM: Alarms, cl, request):
     # Create an HTML response with a list of alarms
     alarms_html = """
     <html>
