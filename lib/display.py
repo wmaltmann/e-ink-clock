@@ -42,30 +42,7 @@ class Display:
         self.initialized = True
     
     # async def _write_alarm(self):
-    #     ALARM_ICON_X = 0
-    #     alarm_offset = 0
-    #     if self.alarm_enabled:
-    #         alarm_offset = write_icon(self.epd, ICONS_24,"ALARM_ON", ALARM_ICON_X, 0, 0)
-    #     else:
-    #         return
-    #     alarm_text = ""
-    #     if self.next_alarm is None:
-    #         alarm_text = "No Alarm"
-    #     else:
-    #         days = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]
-    #         next_active_day = "" if self.next_alarm.next_active_day is None else days[self.next_alarm.next_active_day]
-    #         alarm_text = f"{next_active_day} {self.next_alarm.hour_12}:{self.next_alarm.minute:02} {self.next_alarm.am_pm}"
-    #     self.epd.text(alarm_text, alarm_offset + 4, 8, 0)     
-
-    # async def _write_time(self):
-    #     if int(self.hour) > 9 :
-    #         await write_font(self.epd, DIGITAL_80_PRE, f"!", TIME_CHAR_X1, TIME_CHAR_Y)
-    #     time_offset = await write_font(self.epd, DIGITAL_80_PRE, f"{self.hour}"[-1]+f":{self.minute}", TIME_CHAR_X1+16, TIME_CHAR_Y)
-
-    #     await write_font(self.epd, FRANKLIN_18_PRE, f"{self.am_pm}", time_offset + 4, TIME_CHAR_Y + 64 , 24)
-    
-    # async def _write_date(self):
-    #         await write_font(self.epd, FRANKLIN_18_PRE, f"", 0, 110, 296)
+    #     
 
 #----------------- Asynchronous Drawing Methods -----------------
 
@@ -92,13 +69,15 @@ class Display:
             asyncio.create_task(self._draw_am_pm())
         if "time_day" in changes:
             asyncio.create_task(self._draw_date())
+        if "alarm_enabled" in changes:
+            asyncio.create_task(self._draw_alarm())
 
 
     async def _draw_battery_icon(self):
         await asyncio.sleep_ms(0)
         write_icon(self.epd, ICONS_24, self.DISPLAY_CONTEXT.battery_icon, BATTERY_ICON_X, 0, 0)
         await asyncio.sleep_ms(0)
-        await self.epd.display_Partial(self.epd.buffer)
+        
 
     async def _draw_noise_icon(self):
         await asyncio.sleep_ms(0)
@@ -164,4 +143,24 @@ class Display:
             day_suffix = "#"
         
         await write_font(self.epd, FRANKLIN_18_PRE, f"{self.DISPLAY_CONTEXT.time_day_long}, {self.DISPLAY_CONTEXT.time_month_short} {self.DISPLAY_CONTEXT.time_day}{day_suffix}", 0, 110, 296)
+        await self.epd.display_Partial(self.epd.buffer)
+
+    async def _draw_alarm(self):
+        ALARM_ICON_X = 0
+        alarm_offset = 0
+        if self.DISPLAY_CONTEXT.alarm_enabled:
+            alarm_offset = write_icon(self.epd, ICONS_24,"ALARM_ON", ALARM_ICON_X, 0, 0)
+            await asyncio.sleep_ms(0)
+            alarm_text = ""
+            if self.DISPLAY_CONTEXT.alarm_next is None:
+                alarm_text = "No Alarm"
+            else:
+                days = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]
+                next_active_day = "" if self.DISPLAY_CONTEXT.alarm_next.next_active_day is None else days[self.DISPLAY_CONTEXT.alarm_next.next_active_day]
+                alarm_text = f"{next_active_day} {self.DISPLAY_CONTEXT.alarm_next.hour_12}:{self.DISPLAY_CONTEXT.alarm_next.minute:02} {self.DISPLAY_CONTEXT.alarm_next.am_pm}"
+                self.epd.text(alarm_text, alarm_offset + 4, 8, 0)
+            await asyncio.sleep_ms(0)
+        else:
+            self.epd.fill_rect(0, 0, 180, 24, 0xff)
+        
         await self.epd.display_Partial(self.epd.buffer)

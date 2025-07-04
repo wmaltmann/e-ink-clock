@@ -38,7 +38,7 @@ class WebService:
 
     def enable(self):
         if not self.enabled:
-            self._DISPLAY_CONTEXT.update_web_service(self.WEB_SERVICE_CONNECTING)
+            #self._DISPLAY_CONTEXT.update_web_service(self.WEB_SERVICE_CONNECTING)
             self._WIFI.connect()
             self.enabled = True
             

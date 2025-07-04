@@ -86,7 +86,7 @@ class DisplayContext:
             
         self._notify_subscribers(changed)
 
-    def update_alarm(self, enabled: bool, next_alarm: Alarm):
+    def update_alarm(self, enabled: bool, next_alarm: Alarm | None):
         changed = set()
         if self.alarm_enabled != enabled:
             self.alarm_enabled = enabled
