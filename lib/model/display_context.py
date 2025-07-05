@@ -28,6 +28,9 @@ class DisplayContext:
         self.message_enabled = False
         self.message_text = ""
         self.noise_player_mode = "None"
+        self.timer_enabled = False
+        self.timer_minutes = ""
+        self.timer_end_time = ""
 
         self._subscribers: list = []
 
@@ -138,4 +141,17 @@ class DisplayContext:
         if mode != self.noise_player_mode:
             self.noise_player_mode = mode
             changed.add("noise_player_mode")
+        self._notify_subscribers(changed)
+
+    def update_timer(self, enabled: bool|None = None, minutes: str | None = None, end_time: str | None = None):
+        changed = set()
+        if enabled is not None and enabled != self.timer_enabled:
+            self.timer_enabled = enabled
+            changed.add("timer_enabled")
+        if minutes is not None and minutes != self.timer_minutes:
+            self.timer_minutes = minutes
+            changed.add("timer_minutes")
+        if end_time is not None and end_time != self.timer_end_time:
+            self.timer_end_time = end_time
+            changed.add("timer_end_time")
         self._notify_subscribers(changed)

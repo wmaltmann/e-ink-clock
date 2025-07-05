@@ -23,14 +23,14 @@ CLOCK = Clock(CONFIG, WIFI)
 TONE_PLAYER = TonePlayer()
 AUDIO_PLAYER = AudioPlayer()
 NOISE_PLAYER = NoisePlayer(CONFIG, DISPLAY_CONTEXT)
-ALARM = Alarms(DISPLAY_CONTEXT, CLOCK, TONE_PLAYER, AUDIO_PLAYER, NOISE_PLAYER)
-WEB_SERVICE = WebService(WIFI, ALARM, DISPLAY_CONTEXT)
-BUTTONS = Buttons(NIGHTLIGHT, WEB_SERVICE, NOISE_PLAYER)
+ALARMS = Alarms(DISPLAY_CONTEXT, CLOCK, TONE_PLAYER, AUDIO_PLAYER, NOISE_PLAYER)
+WEB_SERVICE = WebService(WIFI, ALARMS, DISPLAY_CONTEXT)
+BUTTONS = Buttons(NIGHTLIGHT, WEB_SERVICE, NOISE_PLAYER, ALARMS)
 
 async def clock_task():
     while True:
         now = CLOCK.get_time()
-        ALARM.check_alarm(now)
+        ALARMS.check_alarm(now)
         DISPLAY_CONTEXT.update_time(now)
         sleep_seconds = 60 - now.second
         await asyncio.sleep(sleep_seconds)

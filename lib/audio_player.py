@@ -23,7 +23,7 @@ class AudioPlayer:
             if self.enabled:
                 await self._play_audio_async()
             else:
-                await asyncio.sleep(0.1)
+                await asyncio.sleep_ms(500)
 
     async def _play_audio_async(self):
         print("Starting audio playback")

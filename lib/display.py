@@ -76,9 +76,12 @@ class Display:
                         await self._draw_date()
                     elif change == "alarm_enabled":
                         await self._draw_alarm()
+                    elif change in ["timer_enable", "timer_minutes", "timer_end_time"]:
+                        await self._draw_timer()
         
                 await asyncio.sleep_ms(0)
                 await self.epd.display_Partial(self.epd.buffer)
+                await asyncio.sleep_ms(100)
                     
     def _display_updater(self, changes: set[str]):
         if not self.initialized:
@@ -120,7 +123,7 @@ class Display:
         if self.DISPLAY_CONTEXT.time_hour_d1 == "1":
             await write_font(self.epd, DIGITAL_80_PRE, "!", TIME_CHAR_X1, TIME_CHAR_Y)
         else:
-            self.epd.fill_rect(TIME_CHAR_X1, 0, 16, 80, 0xff)
+            self.epd.fill_rect(TIME_CHAR_X1, 24, 16, 80, 0xff)
 
     async def _draw_time_h2(self):
         await asyncio.sleep_ms(0)
@@ -171,3 +174,15 @@ class Display:
             await asyncio.sleep_ms(0)
         else:
             self.epd.fill_rect(0, 0, 180, 24, 0xff)
+
+    async def _draw_timer(self):
+        TIMER_ICON_X = 0
+        timer_offset = 0
+        self.epd.fill_rect(0,0,180,24,0xff)
+        if self.DISPLAY_CONTEXT.timer_enabled:
+            timer_offset = write_icon(self.epd, ICONS_24,"ALARM_SNOOZE", TIMER_ICON_X, 0, 0)
+            await asyncio.sleep_ms(0)
+            if(self.DISPLAY_CONTEXT.timer_end_time is not None and self.DISPLAY_CONTEXT.timer_end_time != ""):
+                self.epd.text(self.DISPLAY_CONTEXT.timer_end_time, timer_offset + 4 , 8, 0)
+            else:
+                self.epd.text(self.DISPLAY_CONTEXT.timer_minutes + " min", timer_offset + 4 , 8, 0)

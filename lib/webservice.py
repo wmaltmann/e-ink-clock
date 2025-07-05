@@ -34,7 +34,7 @@ class WebService:
             if self.enabled:
                 await self._serve()
             else:
-                await asyncio.sleep(0.1)
+                await asyncio.sleep_ms(500)
 
     def enable(self):
         if not self.enabled:
@@ -92,7 +92,7 @@ class WebService:
                     print("Socket error:", e)
             except Exception as e:
                 print("Error:", e)
-            await asyncio.sleep(0.1)
+            await asyncio.sleep_ms(0)
 
         if self._server_socket:
             try:

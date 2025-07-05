@@ -23,7 +23,7 @@ class TonePlayer:
             if self.enabled:
                 await self._play_tone_async()
             else:
-                await asyncio.sleep(0.1)
+                await asyncio.sleep_ms(500)
 
     async def _play_tone_async(self):
         audio = I2S(

@@ -28,13 +28,20 @@ class Alarms:
         self._load_alarms()
         self._next_alarm = self._get_next_alarm()
         self.alarm_triggered = False
+        self.timer_enabled = False
+        self.timer_minutes = 0
         print(f"Alarm initialized. Enabled: {self.alarm_enabled}")
 
     def _switch_changed(self, pin):
         if self.alarm_enabled != (pin.value() == 0):
             self.alarm_enabled = pin.value() == 0
-            if self.alarm_enabled:    
-                self._next_alarm = self._get_next_alarm()
+            if self.alarm_enabled:
+                if(self.timer_enabled):    
+                    self._next_alarm = self._get_timer_end(self.timer_minutes)
+                    self._DISPLAY_CONTEXT.update_timer(end_time=f"{self._next_alarm.hour_12}:{self._next_alarm.minute:02} {self._next_alarm.am_pm}")
+                else:
+                    self._next_alarm = self._get_next_alarm()
+                    self._DISPLAY_CONTEXT.update_alarm(self.alarm_enabled, self._next_alarm)
                 self._TONE_PLAYER.update_tone(self._next_alarm.frequency if self._next_alarm else 500,
                                              300,
                                              32767 // 4,
@@ -44,13 +51,15 @@ class Alarms:
                 self._AUDIO_PLAYER.update_audio(300, False, 10)
                 if self._NOISE_PLAYER.mode == NoisePlayer.MODE_BROWN:
                     self._NOISE_PLAYER.enable()
-                self._DISPLAY_CONTEXT.update_alarm(self.alarm_enabled, self._next_alarm)
             else:
                 self.alarm_triggered = False
+                self.timer_enabled = False
+                self.timer_minutes = 0
                 self._NOISE_PLAYER.disable()
                 self._TONE_PLAYER.disable()
                 self._AUDIO_PLAYER.disable()
-                self._DISPLAY_CONTEXT.update_alarm(self.alarm_enabled, None)
+                self._DISPLAY_CONTEXT.update_timer(False, "", "")
+                self._DISPLAY_CONTEXT.update_alarm(False, None)
 
     def _load_alarms(self):
         try:
@@ -124,6 +133,38 @@ class Alarms:
         self._next_alarm = soonest
         return soonest
 
+    def _get_timer_end(self, duration_min: int):
+        if duration_min <= 0:
+            duration_min = 5
+            print("Timer duration must be greater than 0 min, setting to 5 min")
+
+        now = self._CLOCK.get_time()
+        total_minutes = now.hour_24 * 60 + now.minute + duration_min
+
+        # Compute new time and day
+        new_hour = (total_minutes // 60) % 24
+        new_minute = total_minutes % 60
+        day_offset = (total_minutes // 1440)
+        end_day = (now.weekday + day_offset) % 7
+
+        # Create day list with only the end_day active
+        days = [False] * 7
+        days[end_day] = True
+
+        return Alarm(
+            hour=new_hour,
+            minute=new_minute,
+            days=days,
+            name=f"Timer {duration_min} min",
+            next_active_day=end_day,
+            enabled=True,
+            tone=True,
+            vibrate=False,
+            audio=False,
+            ramp=True,
+            frequency=440
+        )
+
 
     def add_alarm(self, alarm):
         if not isinstance(alarm, Alarm):
@@ -177,7 +218,24 @@ class Alarms:
                 self.alarm_triggered = True
                 if self._next_alarm.tone:
                     self._TONE_PLAYER.enable()
-                    print(f"Alarm '{self._next_alarm.name}' tone triggered!")
                 elif self._next_alarm.audio:
                     self._AUDIO_PLAYER.enable()
-                    print(f"Alarm '{self._next_alarm.name}' audio triggered!")
+
+    def toggle_timer(self):
+        if self.timer_minutes == 0:
+            self.timer_minutes = 5
+            self.timer_enabled = True
+        elif self.timer_minutes == 5:
+            self.timer_minutes = 10
+        elif self.timer_minutes == 10:
+            self.timer_minutes = 15
+        elif self.timer_minutes == 15:
+            self.timer_minutes = 30
+        elif self.timer_minutes == 30:
+            self.timer_minutes = 45
+        elif self.timer_minutes == 45:
+            self.timer_minutes = 60
+        elif self.timer_minutes == 60:
+            self.timer_minutes = 0
+            self.timer_enabled = False
+        self._DISPLAY_CONTEXT.update_timer(self.timer_enabled, str(self.timer_minutes))

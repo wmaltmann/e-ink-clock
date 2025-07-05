@@ -35,9 +35,9 @@ class NoisePlayer():
                 if self._CONFIG.clock.noise_mode == self.MODE_BROWN:
                     await self._play_brown_noise_async()
                 else:
-                    await asyncio.sleep(0.1)   
+                    await asyncio.sleep_ms(500)   
             else:
-                await asyncio.sleep(0.1)
+                await asyncio.sleep_ms(500)
 
     async def _play_brown_noise_async(self):
         audio = I2S(
