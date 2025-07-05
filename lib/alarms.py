@@ -41,9 +41,11 @@ class Alarms:
                                              50,
                                              1.0,
                                              self._next_alarm.ramp if self._next_alarm else False)
-                self._AUDIO_PLAYER.update_audio(300, self._next_alarm.ramp if self._next_alarm else False)
+                self._AUDIO_PLAYER.update_audio(300, False) #self._next_alarm.ramp if self._next_alarm else False)
                 if self._NOISE_PLAYER.mode == NoisePlayer.MODE_BROWN:
-                    self._NOISE_PLAYER.enable()
+                    #self._NOISE_PLAYER.enable()
+                    pass
+                self._AUDIO_PLAYER.enable()
                 self._DISPLAY_CONTEXT.update_alarm(self.alarm_enabled, self._next_alarm)
             else:
                 self.alarm_triggered = False

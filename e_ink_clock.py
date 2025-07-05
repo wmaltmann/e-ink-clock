@@ -46,6 +46,7 @@ async def main():
     CLOCK.set_time_from_ntp()
     asyncio.create_task(TONE_PLAYER.run())
     asyncio.create_task(NOISE_PLAYER.run())
+    asyncio.create_task(AUDIO_PLAYER.run())
     asyncio.create_task(WEB_SERVICE.run())
     asyncio.create_task(clock_task())
     asyncio.create_task(battery_monitor_task())
