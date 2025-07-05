@@ -117,10 +117,10 @@ class Display:
 
     async def _draw_time_h1(self):
         await asyncio.sleep_ms(0)
-        if int(self.DISPLAY_CONTEXT.time_hour_d1) > 9:
+        if self.DISPLAY_CONTEXT.time_hour_d1 == "1":
             await write_font(self.epd, DIGITAL_80_PRE, "!", TIME_CHAR_X1, TIME_CHAR_Y)
         else:
-            self.epd.fill_rect(WIFI_ICON_X, 0, 16, 80, 0xff)
+            self.epd.fill_rect(TIME_CHAR_X1, 0, 16, 80, 0xff)
 
     async def _draw_time_h2(self):
         await asyncio.sleep_ms(0)
