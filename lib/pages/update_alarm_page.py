@@ -1,6 +1,5 @@
 from lib.model.alarm import Alarm
 from lib.alarms import Alarms
-from lib.profiler import Profiler
 
 def unescape_text(text):
     result = ""

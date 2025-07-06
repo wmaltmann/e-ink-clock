@@ -1,4 +1,5 @@
 import socket
+import gc
 import uasyncio as asyncio
 from lib.wifi import Wifi
 from lib.alarms import Alarms
@@ -61,6 +62,8 @@ class WebService:
         self._DISPLAY_CONTEXT.update_web_service(self.WEB_SERVICE_ON, self._WIFI.ifconfig()[0])
 
         while self.enabled:
+            cl = None
+            request = None  # Pre-declare so we can clean up
             try:
                 self._server_socket.settimeout(0.1)
                 cl, addr = self._server_socket.accept()
@@ -89,14 +92,23 @@ class WebService:
                 elif b"GET /" in request:
                     home_page(cl) 
                 else:
-                    if timeout == False:
+                    if not timeout:
                         not_found_page(cl)
 
             except OSError as e:
-                if e.args[0] != 110:  # 110 is ETIMEDOUT
+                if e.args[0] != 110:
                     print("Socket error:", e)
             except Exception as e:
                 print("Error:", e)
+            finally:
+                if cl:
+                    try:
+                        cl.close()
+                    except Exception as e:
+                        print("Error closing socket:", e)
+                request = None
+                cl = None
+                gc.collect()
             await asyncio.sleep_ms(0)
 
         if self._server_socket:
@@ -107,7 +119,8 @@ class WebService:
             self._server_socket = None
             print("Web server stopped")
         self._WIFI.disconnect()
-        self._DISPLAY_CONTEXT.update_web_service(self.WEB_SERVICE_OFF,"")
+        self._DISPLAY_CONTEXT.update_web_service(self.WEB_SERVICE_OFF, "")
+
 
     def http_response(self, cl, body, code=200):
         cl.send(f"HTTP/1.1 {code} OK\r\nContent-Type: text/html\r\n\r\n")

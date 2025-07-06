@@ -45,7 +45,6 @@ class Display:
     async def _update_runner(self):
         while True:
             seen_changes = set()
-            # Batch changes over a short delay to collapse bursty updates
             try:
                 await self._update_queue._get_event.wait()
                 await asyncio.sleep_ms(50)
@@ -149,6 +148,7 @@ class Display:
 
     async def _draw_message(self):
         message = ""
+        self.epd.fill_rect(0, 104, 296, 24, 0xff)
         await asyncio.sleep_ms(0)
         if self.DISPLAY_CONTEXT.message_enabled:
             message = self.DISPLAY_CONTEXT.message_text

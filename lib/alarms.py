@@ -23,7 +23,7 @@ class Alarms:
         self._pin.irq(trigger=Pin.IRQ_FALLING | Pin.IRQ_RISING, handler=self._switch_changed)
         self._CLOCK = CLOCK
         self._DISPLAY_CONTEXT = display_context
-        self._alarms = []  # type: list[Alarm]
+        self._alarms = []  # type: List[Alarm]
         self._file_path = "/alarms.json"
         self._load_alarms()
         self._next_alarm = self._get_next_alarm()
@@ -190,7 +190,7 @@ class Alarms:
                 self._alarms[i] = new_alarm
                 self._save_alarms()
                 return True
-                print("Alarm Updated and Saved")
+
         return False
     
     def get_alarms(self):
