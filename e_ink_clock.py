@@ -29,10 +29,13 @@ BUTTONS = Buttons(NIGHTLIGHT, WEB_SERVICE, NOISE_PLAYER, ALARMS)
 
 async def clock_task():
     while True:
-        now = CLOCK.get_time()
-        ALARMS.check_alarm(now)
-        DISPLAY_CONTEXT.update_time(now)
-        sleep_seconds = 60 - now.second
+        if DISPLAY_CONTEXT.web_service_status != WebService.WEB_SERVICE_ON:
+            now = CLOCK.get_time()
+            ALARMS.check_alarm(now)
+            DISPLAY_CONTEXT.update_time(now)
+            sleep_seconds = 60 - now.second
+        else:
+            sleep_seconds = 60
         await asyncio.sleep(sleep_seconds)
 
 async def battery_monitor_task():

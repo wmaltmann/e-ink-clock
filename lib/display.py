@@ -73,15 +73,17 @@ class Display:
                     elif change == "time_am_pm":
                         await self._draw_am_pm()
                     elif change == "time_day":
-                        await self._draw_date()
+                        await self._draw_message()
                     elif change == "alarm_enabled":
                         await self._draw_alarm()
                     elif change in ["timer_enable", "timer_minutes", "timer_end_time"]:
                         await self._draw_timer()
+                    elif change == "message_updated":
+                        await self._draw_message()
         
                 await asyncio.sleep_ms(0)
                 await self.epd.display_Partial(self.epd.buffer)
-                await asyncio.sleep_ms(100)
+            await asyncio.sleep_ms(100)
                     
     def _display_updater(self, changes: set[str]):
         if not self.initialized:
@@ -145,17 +147,22 @@ class Display:
         await asyncio.sleep_ms(0)
         await write_font(self.epd, FRANKLIN_18_PRE, self.DISPLAY_CONTEXT.time_am_pm, TIME_CHAR_X6, TIME_CHAR_Y + 64)
 
-    async def _draw_date(self):
+    async def _draw_message(self):
+        message = ""
         await asyncio.sleep_ms(0)
-        day_suffix = "$"
-        if(self.DISPLAY_CONTEXT.time_day_suffix == "st"):
-            day_suffix = "!"
-        if(self.DISPLAY_CONTEXT.time_day_suffix == "nd"):
-            day_suffix = "@"
-        if(self.DISPLAY_CONTEXT.time_day_suffix == "rd"):
-            day_suffix = "#"
+        if self.DISPLAY_CONTEXT.message_enabled:
+            message = self.DISPLAY_CONTEXT.message_text
+        else:
+            day_suffix = "$"
+            if(self.DISPLAY_CONTEXT.time_day_suffix == "st"):
+                day_suffix = "!"
+            if(self.DISPLAY_CONTEXT.time_day_suffix == "nd"):
+                day_suffix = "@"
+            if(self.DISPLAY_CONTEXT.time_day_suffix == "rd"):
+                day_suffix = "#"
+            message = f"{self.DISPLAY_CONTEXT.time_day_long}, {self.DISPLAY_CONTEXT.time_month_short} {self.DISPLAY_CONTEXT.time_day}{day_suffix}"
         
-        await write_font(self.epd, FRANKLIN_18_PRE, f"{self.DISPLAY_CONTEXT.time_day_long}, {self.DISPLAY_CONTEXT.time_month_short} {self.DISPLAY_CONTEXT.time_day}{day_suffix}", 0, 110, 296)
+        await write_font(self.epd, FRANKLIN_18_PRE, message , 0, 110, 296)
 
     async def _draw_alarm(self):
         ALARM_ICON_X = 0

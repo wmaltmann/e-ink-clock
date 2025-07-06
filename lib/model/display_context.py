@@ -131,9 +131,9 @@ class DisplayContext:
                 self.message_enabled = False
                 self.message_text = ""
             else:
-                self.message_enabled
+                self.message_enabled = True
                 self.message_text = message
-            changed.add("web_service_message")
+            changed.add("message_updated")
         self._notify_subscribers(changed)
 
     def update_noise_player(self, mode: str):

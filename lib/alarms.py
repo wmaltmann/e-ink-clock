@@ -190,6 +190,7 @@ class Alarms:
                 self._alarms[i] = new_alarm
                 self._save_alarms()
                 return True
+                print("Alarm Updated and Saved")
         return False
     
     def get_alarms(self):

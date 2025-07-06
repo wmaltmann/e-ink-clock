@@ -38,7 +38,7 @@ class WebService:
 
     def enable(self):
         if not self.enabled:
-            #self._DISPLAY_CONTEXT.update_web_service(self.WEB_SERVICE_CONNECTING)
+            self._DISPLAY_CONTEXT.update_web_service(self.WEB_SERVICE_CONNECTING,"")
             self._WIFI.connect()
             self.enabled = True
             
@@ -58,21 +58,24 @@ class WebService:
         self._server_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
         self._server_socket.bind(addr)
         self._server_socket.listen(1)
-        print("Web server running")
         self._DISPLAY_CONTEXT.update_web_service(self.WEB_SERVICE_ON, self._WIFI.ifconfig()[0])
 
         while self.enabled:
             try:
-                self._server_socket.settimeout(1)
+                self._server_socket.settimeout(0.1)
                 cl, addr = self._server_socket.accept()
-                print("Client connected from", addr)
                 request = b""
+                timeout = False
                 while True:
-                    chunk = cl.recv(1024)
-                    if not chunk:
-                        break
-                    request += chunk
-                    if b"\r\n\r\n" in request:
+                    try:
+                        chunk = cl.recv(1024)
+                        if not chunk:
+                            break
+                        request += chunk
+                        if b"\r\n\r\n" in request:
+                            break
+                    except OSError:
+                        timeout = True
                         break
 
                 if b"GET /alarms" in request:
@@ -84,9 +87,11 @@ class WebService:
                 elif b"GET /delete_alarm" in request:
                     delete_alarm_page(self._ALARM, cl, request)
                 elif b"GET /" in request:
-                    home_page(cl)
+                    home_page(cl) 
                 else:
-                    not_found_page(cl)
+                    if timeout == False:
+                        not_found_page(cl)
+
             except OSError as e:
                 if e.args[0] != 110:  # 110 is ETIMEDOUT
                     print("Socket error:", e)

@@ -1,5 +1,6 @@
 from lib.model.alarm import Alarm
 from lib.alarms import Alarms
+from lib.profiler import Profiler
 
 def unescape_text(text):
     result = ""
@@ -49,13 +50,12 @@ def parse_form_data(body):
             params[key] = value.replace("+", " ")
     return params
 
-def update_alarm_page(ALARM: Alarms , cl, request):
+def update_alarm_page(ALARMS: Alarms , cl, request):
     request_str = request.decode()
     request_line = request_str.split("\r\n", 1)[0]
     query = parse_query_params(request_line)
     name = query.get("name", "")
-    print("Update alarm request for:", name)
-    alarm = ALARM.get_alarm(name)
+    alarm = ALARMS.get_alarm(name)
 
     if alarm is None:
         cl.send("HTTP/1.1 400 Bad Request\r\nContent-Type: text/html\r\n\r\n")
@@ -82,8 +82,7 @@ def update_alarm_page(ALARM: Alarms , cl, request):
                 audio=params.get("audio", "off") == "on",
                 frequency=int(params.get("frequency", 440))
             )
-
-            ALARM.update_alarm(updated_alarm)
+            ALARMS.update_alarm(updated_alarm)
             html = "<html><body><h2>Alarm updated!</h2><a href='/alarms'>Back to alarms</a></body></html>"
 
         except Exception as e:
