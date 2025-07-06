@@ -17,6 +17,7 @@ def add_alarm_page(ALARM, cl, request):
             ramp = params.get("ramp", "off") == "on"
             audio = params.get("audio", "off") == "on"
             frequency = int(params.get("frequency", 440))
+            volume = int(params.get("volume",10))
 
             # Parse days (checkboxes)
             days = [(f"day{i}" in params) for i in range(7)]
@@ -31,7 +32,8 @@ def add_alarm_page(ALARM, cl, request):
                 tone=tone,
                 ramp=ramp,
                 audio=audio,
-                frequency=frequency
+                frequency=frequency,
+                volume = volume
             )
 
             ALARM.add_alarm(new_alarm)
@@ -54,6 +56,7 @@ def add_alarm_page(ALARM, cl, request):
         Hour: <input type="number" name="hour" min="0" max="23"><br>
         Minute: <input type="number" name="minute" min="0" max="59"><br>
         Frequency: <input type="number" name="frequency" value="440"><br>
+        Volume: <input type="number" name="volume" value="NA" min="0" max="100"><br>
         <p>Days:</p>
         <label><input type="checkbox" name="day0">Mon</label>
         <label><input type="checkbox" name="day1">Tue</label>

@@ -7,6 +7,7 @@ from lib.model.datetime import Datetime
 from lib.tone_player import TonePlayer
 from lib.noise_player import NoisePlayer
 from lib.audio_player import AudioPlayer
+from lib.config import Config
 
 try:
     from typing import List
@@ -14,7 +15,8 @@ except ImportError:
     pass
 
 class Alarms:
-    def __init__(self, display_context: DisplayContext, CLOCK: Clock, TONE_PLAYER: TonePlayer, AUDIO_PLAYER: AudioPlayer, NOISE_PLAYER: NoisePlayer):
+    def __init__(self, display_context: DisplayContext, CLOCK: Clock, TONE_PLAYER: TonePlayer, AUDIO_PLAYER: AudioPlayer, NOISE_PLAYER: NoisePlayer, CONFIG: Config):
+        self._CONFIG = CONFIG
         self._TONE_PLAYER = TONE_PLAYER
         self._AUDIO_PLAYER = AUDIO_PLAYER
         self._NOISE_PLAYER = NOISE_PLAYER
@@ -48,8 +50,9 @@ class Alarms:
                                              50,
                                              1.0,
                                              self._next_alarm.ramp if self._next_alarm else False)
-                self._AUDIO_PLAYER.update_audio(300, False, 10)
+                self._AUDIO_PLAYER.update_audio(300, False, self._next_alarm.volume if self._next_alarm else 10)
                 if self._NOISE_PLAYER.mode == NoisePlayer.MODE_BROWN:
+                    self._NOISE_PLAYER.update(self._CONFIG.clock.noise_volume)
                     self._NOISE_PLAYER.enable()
             else:
                 self.alarm_triggered = False
@@ -162,7 +165,8 @@ class Alarms:
             vibrate=False,
             audio=False,
             ramp=True,
-            frequency=440
+            frequency=440,
+            volume=self._CONFIG.clock.timer_volume
         )
 
 

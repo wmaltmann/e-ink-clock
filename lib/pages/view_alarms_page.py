@@ -8,7 +8,7 @@ def view_alarms_page(ALARM: Alarms, cl, request):
         <h1>Alarm List</h1>
         <table border='1'>
             <tr>
-                <th>Name</th><th>Time</th><th>Days</th><th>Enabled</th><th>Actions</th>
+                <th>Name</th><th>Time</th><th>Days</th><th>Enabled</th><th>Volume</th><th>Actions</th>
             </tr>
     """
 
@@ -27,6 +27,7 @@ def view_alarms_page(ALARM: Alarms, cl, request):
                 <td>{time_str}</td>
                 <td>{active_days}</td>
                 <td>{enabled_str}</td>
+                <td>{alarm.volume}</td>
                 <td>
                     <a href="/update_alarm?name={alarm.name}">Update</a> |
                     <a href="/delete_alarm?name={alarm.name}">Delete</a>

@@ -79,7 +79,8 @@ def update_alarm_page(ALARMS: Alarms , cl, request):
                 tone=params.get("tone", "off") == "on",
                 ramp=params.get("ramp", "off") == "on",
                 audio=params.get("audio", "off") == "on",
-                frequency=int(params.get("frequency", 440))
+                frequency=int(params.get("frequency", 440)),
+                volume=int(params.get("volume", 10))
             )
             ALARMS.update_alarm(updated_alarm)
             html = "<html><body><h2>Alarm updated!</h2><a href='/alarms'>Back to alarms</a></body></html>"
@@ -102,6 +103,7 @@ def update_alarm_page(ALARMS: Alarms , cl, request):
         Hour: <input type="number" name="hour" min="0" max="23" value="{alarm.hour}"><br>
         Minute: <input type="number" name="minute" min="0" max="59" value="{alarm.minute}"><br>
         Frequency: <input type="number" name="frequency" value="{alarm.frequency}"><br>
+        Volume: <input type="number" name="volume" value="{alarm.volume}" min="0" max="100"><br>
         <p>Days:</p>
     """
     for i, day in enumerate(["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]):

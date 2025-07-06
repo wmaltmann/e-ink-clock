@@ -12,7 +12,8 @@ class Alarm:
                  ramp=False,
                  frequency=440,
                  hour_12 = 0,
-                 am_pm = None):
+                 am_pm = None,
+                 volume = 10):
         if not (0 <= hour <= 23):
             raise ValueError("hour must be between 0 and 23")
         if not (0 <= minute <= 59):
@@ -31,6 +32,7 @@ class Alarm:
         self.ramp = ramp
         self.frequency = frequency
         self.name = name
+        self.volume = volume
         self.hour_12 = self._calc_hour_12() if hour_12 == 0 else hour_12
         self.am_pm = am_pm if am_pm is not None else "AM" if self.hour < 12 else "PM"
 
@@ -43,6 +45,6 @@ class Alarm:
         active_days = [days_str[i] for i, active in enumerate(self.days) if active]
         time_str = f"{self.hour:02}:{self.minute:02}"
         return (
-            f"Alarm at {time_str} | Enabled: {self.enabled} | Days: {', '.join(active_days)} | "
-            f"Vibrate: {self.vibrate} | Tone: {self.tone} | Audio: {self.audio} | Ramp: {self.ramp} | Freq: {self.frequency}Hz"
+            f"Alarm {self.name} at {time_str} | Enabled: {self.enabled} | Days: {', '.join(active_days)} | "
+            f"Vibrate: {self.vibrate} | Tone: {self.tone} | Audio: {self.audio} | Ramp: {self.ramp} | Freq: {self.frequency}Hz | Volume: {self.volume}%"
         )

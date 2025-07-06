@@ -6,6 +6,7 @@ def home_page(cl):
     <body>
         <h1>Welcome to the Home Page</h1>
         <p><a href="/alarms">View Alarms</a></p>
+        <p><a href="/update_config">Update Config</a></p>
     </body>
     </html>
     """

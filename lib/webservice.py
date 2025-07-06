@@ -4,12 +4,14 @@ import uasyncio as asyncio
 from lib.wifi import Wifi
 from lib.alarms import Alarms
 from lib.model.display_context import DisplayContext
+from lib.config import Config
 from lib.pages.view_alarms_page import view_alarms_page
 from lib.pages.add_alarm_page import add_alarm_page
 from lib.pages.update_alarm_page import update_alarm_page
 from lib.pages.home_page import home_page
 from lib.pages.not_found import not_found_page
 from lib.pages.delete_alarm_page import delete_alarm_page
+from lib.pages.update_config_page import update_config_page
 
 class WebService:
     WEB_SERVICE_ON = "On"
@@ -22,13 +24,14 @@ class WebService:
     ]
 
 
-    def __init__(self, WIFI: Wifi, ALARM: Alarms, display_context: DisplayContext):
+    def __init__(self, WIFI: Wifi, ALARM: Alarms, display_context: DisplayContext, config: Config):
         self.enabled = False
         self._running = True
         self._server_socket = None
         self._ALARM = ALARM
         self._WIFI = WIFI
         self._DISPLAY_CONTEXT = display_context
+        self._CONFIG = config
 
     async def run(self):
         while self._running:
@@ -89,6 +92,8 @@ class WebService:
                     update_alarm_page(self._ALARM, cl, request)
                 elif b"GET /delete_alarm" in request:
                     delete_alarm_page(self._ALARM, cl, request)
+                elif b"GET /update_config" in request or b"POST /update_config" in request:
+                    update_config_page(self._CONFIG,cl, request)
                 elif b"GET /" in request:
                     home_page(cl) 
                 else:
