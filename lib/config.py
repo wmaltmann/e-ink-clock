@@ -46,9 +46,9 @@ class Config:
                             else:
                                 self.clock.noise_mode = "None"
                         elif key == "NOISE_VOLUME":
-                            self.clock.noise_volume = value
+                            self.clock.noise_volume = int(value)
                         elif key == "TIMER_VOLUME":
-                            self.clock.timer_volume = value
+                            self.clock.timer_volume = int(value)
                         elif key == "TIMEZONE":
                             self.clock.timezone = value
                         elif key == "DAYLIGHT_SAVING":
@@ -90,7 +90,7 @@ class Config:
                 f.write(f"TIMEZONE={self.clock.timezone}\n")
                 f.write(f"DAYLIGHT_SAVING={str(self.clock.daylight_saving).upper()}\n")
                 f.write(f"NOISE_MODE={self.clock.noise_mode}\n")
-                f.write(f"NOISE_VOLUME={self.clock.noise_volume}\n")
-                f.write(f"TIMER_VOLUME={self.clock.timer_volume}\n")
+                f.write(f"NOISE_VOLUME={str(self.clock.noise_volume)}\n")
+                f.write(f"TIMER_VOLUME={str(self.clock.timer_volume)}\n")
         except OSError as e:
             print(f"Error saving config file: {e}")

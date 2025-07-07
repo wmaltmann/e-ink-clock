@@ -13,7 +13,7 @@ class NoisePlayer():
 
     AMPLITUDE_MAX = 32767  # Max 16-bit signed int
 
-    def __init__(self, CONFIG: Config , display_context: DisplayContext, volume_percent=1, ramp=False):
+    def __init__(self, CONFIG: Config , display_context: DisplayContext, volume_percent=10, ramp=False):
         self._CONFIG = CONFIG
         self._DISPLAY_CONTEXT = display_context
         self.mode = CONFIG.clock.noise_mode

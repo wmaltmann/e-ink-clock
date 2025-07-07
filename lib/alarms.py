@@ -1,3 +1,4 @@
+import time
 import ujson
 from machine import Pin
 from lib.model.display_context import DisplayContext
@@ -50,9 +51,9 @@ class Alarms:
                                              50,
                                              1.0,
                                              self._next_alarm.ramp if self._next_alarm else False)
-                self._AUDIO_PLAYER.update_audio(300, False, self._next_alarm.volume if self._next_alarm else 10)
+                self._AUDIO_PLAYER.update_audio(300, False)
                 if self._NOISE_PLAYER.mode == NoisePlayer.MODE_BROWN:
-                    self._NOISE_PLAYER.update(self._CONFIG.clock.noise_volume)
+                    self._NOISE_PLAYER.update(volume_percent=self._CONFIG.clock.noise_volume)
                     self._NOISE_PLAYER.enable()
             else:
                 self.alarm_triggered = False
