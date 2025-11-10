@@ -1,17 +1,14 @@
 import socket
+import ujson
 import gc
 import uasyncio as asyncio
 from lib.wifi import Wifi
 from lib.alarms import Alarms
 from lib.model.display_context import DisplayContext
 from lib.config import Config
-from lib.pages.view_alarms_page import view_alarms_page
-from lib.pages.add_alarm_page import add_alarm_page
-from lib.pages.update_alarm_page import update_alarm_page
-from lib.pages.home_page import home_page
-from lib.pages.not_found import not_found_page
-from lib.pages.delete_alarm_page import delete_alarm_page
-from lib.pages.update_config_page import update_config_page
+from lib.web.not_found import not_found_page
+from lib.web.api import get_alarm_page, get_alarms, update_alarm_param
+
 
 class WebService:
     WEB_SERVICE_ON = "On"
@@ -66,9 +63,9 @@ class WebService:
 
         while self.enabled:
             cl = None
-            request = None  # Pre-declare so we can clean up
+            request = None
             try:
-                self._server_socket.settimeout(0.1)
+                self._server_socket.settimeout(1)
                 cl, addr = self._server_socket.accept()
                 request = b""
                 timeout = False
@@ -84,21 +81,40 @@ class WebService:
                         timeout = True
                         break
 
-                if b"GET /alarms" in request:
-                    view_alarms_page(self._ALARM, cl, request)
-                elif b"GET /add_alarm" in request or b"POST /add_alarm" in request:
-                    add_alarm_page(self._ALARM, cl, request)
-                elif b"GET /update_alarm" in request or b"POST /update_alarm" in request:
-                    update_alarm_page(self._ALARM, cl, request)
-                elif b"GET /delete_alarm" in request:
-                    delete_alarm_page(self._ALARM, cl, request)
-                elif b"GET /update_config" in request or b"POST /update_config" in request:
-                    update_config_page(self._CONFIG,cl, request)
-                elif b"GET /" in request:
-                    home_page(cl) 
+                if b"POST /api/alarms/" in request and b"/update" in request:
+                    print("Serving: GET api/alarms/<id>/update")
+                    # Parse URL
+                    path_line = request.split(b"\r\n")[0]
+                    path = path_line.split(b" ")[1]
+                    alarm_id = path.split(b"/")[3].decode()
+
+                    # Parse JSON body
+                    body = request.split(b"\r\n\r\n", 1)[1]
+                    data = ujson.loads(body.decode())
+
+                    param = data.get("param")
+                    value = data.get("value")
+
+                    update_alarm_param(self._ALARM, cl, alarm_id, param, value)
+
+                elif b"GET /api/alarms/" in request:
+                    print("Serving: GET api/alarms/<id>")
+                    path_line = request.split(b"\r\n")[0]
+                    alarm_id = path_line.split(b"/alarms/")[1].split(b" ")[0].decode()
+                    get_alarm_page(self._ALARM, cl, alarm_id)
+                elif b"GET /api/alarms" in request:
+                    print("Serving: GET api/alarms")
+                    get_alarms(self._ALARM, cl)
+
                 else:
-                    if not timeout:
-                        not_found_page(cl)
+                    try:
+                        first_line = request.split(b"\r\n", 1)[0]
+                        parts = first_line.split(b" ")
+                        path = parts[1].decode()
+                    except:
+                        path = "/"
+                    print("Serving Static:", path)
+                    self._serve_static(cl, path)
 
             except OSError as e:
                 if e.args[0] != 110:
@@ -131,3 +147,45 @@ class WebService:
         cl.send(f"HTTP/1.1 {code} OK\r\nContent-Type: text/html\r\n\r\n")
         cl.send(body)
         cl.close()
+
+    def _serve_static(self, cl, path):
+        if path.startswith("/"):
+            path = path[1:]
+        if path.startswith("assets/"):
+            pass
+        elif path == "favicon.ico":
+            path = "assets/favicon.ico"
+        else:
+            path = "index.html"
+
+        if path.endswith(".html"):
+            mime = "text/html"
+        elif path.endswith(".js"):
+            mime = "application/javascript"
+        elif path.endswith(".css"):
+            mime = "text/css"
+        elif path.endswith(".json"):
+            mime = "application/json"
+        elif path.endswith(".png"):
+            mime = "image/png"
+        elif path.endswith(".jpg") or path.endswith(".jpeg"):
+            mime = "image/jpeg"
+        else:
+            mime = "application/octet-stream"
+
+        try:
+            cl.send("HTTP/1.1 200 OK\r\n")
+            cl.send("Content-Type: {}\r\n".format(mime))
+            cl.send("Connection: close\r\n\r\n")
+            with open(f"/lib/web/{path}", "rb") as f:
+                while True:
+                    chunk = f.read(1024)
+                    if not chunk:
+                        break
+                    cl.write(chunk)
+
+        except Exception as e:
+            print("Static file error:", e)
+        finally:
+            try: cl.close()
+            except: pass

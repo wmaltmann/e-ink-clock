@@ -1,3 +1,4 @@
+from lib.uuid import generate_uuid
 import time
 import ujson
 from machine import Pin
@@ -74,7 +75,7 @@ class Alarms:
         except (OSError, ValueError):
             print("No alarm file found or file corrupt. Starting with empty alarm list.")
 
-    def _save_alarms(self):
+    def save_alarms(self):
         try:
             with open(self._file_path, "w") as f:
                 ujson.dump([alarm.__dict__ for alarm in self._alarms], f)
@@ -156,6 +157,7 @@ class Alarms:
         days[end_day] = True
 
         return Alarm(
+            id=generate_uuid(),
             hour=new_hour,
             minute=new_minute,
             days=days,
@@ -177,14 +179,14 @@ class Alarms:
         if not hasattr(alarm, 'name'):
             raise ValueError("alarm must have an 'name' property")
         self._alarms.append(alarm)
-        self._save_alarms()
+        self.save_alarms()
 
     def remove_alarm(self, name):
         original_count = len(self._alarms)
         self._alarms = [alarm for alarm in self._alarms if alarm.name != name]
         changed = len(self._alarms) < original_count
         if changed:
-            self._save_alarms()
+            self.save_alarms()
         return changed
     
     def update_alarm(self, new_alarm):
@@ -193,7 +195,7 @@ class Alarms:
         for i, alarm in enumerate(self._alarms):
             if alarm.name == new_alarm.name:
                 self._alarms[i] = new_alarm
-                self._save_alarms()
+                self.save_alarms()
                 return True
 
         return False

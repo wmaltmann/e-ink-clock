@@ -1,5 +1,6 @@
 class Alarm:
     def __init__(self,
+                 id: str,
                  hour: int,
                  minute: int,
                  days,
@@ -21,6 +22,7 @@ class Alarm:
         if len(days) != 7 or not all(isinstance(d, bool) for d in days):
             raise ValueError("days must be a list of 7 booleans")
 
+        self.id = id
         self.hour = hour
         self.minute = minute
         self.days = days  # List of 7 booleans [Sun, Mon, ..., Sat]
