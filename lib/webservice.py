@@ -69,7 +69,6 @@ class WebService:
                 self._server_socket.settimeout(1)
                 cl, addr = self._server_socket.accept()
                 request = b""
-                timeout = False
                 while True:
                     try:
                         chunk = cl.recv(1024)
@@ -79,14 +78,13 @@ class WebService:
                         if b"\r\n\r\n" in request:
                             break
                     except OSError:
-                        timeout = True
                         break
 
                 if b"POST /api/alarms/create" in request:
                     print("Serving: POST api/alarms/create")
                     create_alarm(self._ALARM, cl,)
 
-                if b"POST /api/alarms/" in request and b"/delete" in request:
+                elif b"POST /api/alarms/" in request and b"/delete" in request:
                     print("Serving: POST api/alarms/<id>/delete")
                     path_line = request.split(b"\r\n")[0]
                     path = path_line.split(b" ")[1]
@@ -94,7 +92,7 @@ class WebService:
 
                     delete_alarm(self._ALARM, cl, alarm_id)
                 
-                if b"POST /api/alarms/" in request and b"/update" in request:
+                elif b"POST /api/alarms/" in request and b"/update" in request:
                     print("Serving: GET api/alarms/<id>/update")
                     path_line = request.split(b"\r\n")[0]
                     path = path_line.split(b" ")[1]
@@ -117,18 +115,20 @@ class WebService:
                     print("Serving: GET api/alarms")
                     get_alarms(self._ALARM, cl)
 
-                elif b"GET /api/timer" in request:
-                    print("Serving: GET api/timer")
-                    get_timer(self._TIMER, cl)
-
-                elif b"POST /api/timer" in request:
-                    print("Serving: POST api/timer")
+                elif b"POST /api/timer/update" in request:
+                    print("Serving: POST api/timer/update")
                     path_line = request.split(b"\r\n")[0]
                     body = request.split(b"\r\n\r\n", 1)[1]
                     data = ujson.loads(body.decode())
 
-                    for param, value in data.items():
-                        update_timer_param(self._TIMER, cl, param, value)
+                    param = data.get("param")
+                    value = data.get("value")
+                    
+                    update_timer_param(self._TIMER, cl, param, value)
+
+                elif b"GET /api/timer" in request:
+                    print("Serving: GET api/timer")
+                    get_timer(self._TIMER, cl)
 
                 else:
                     try:
@@ -175,7 +175,7 @@ class WebService:
     def _serve_static(self, cl, path):
         if path.startswith("/"):
             path = path[1:]
-        paths = ["registerSW.js", "icon-256.png", "manifest.json", "manifest.webmanifest", "favicon.ico","sw.js", "workbox-5ffe50d4.js"]
+        paths = ["icon-256.png", "manifest.json", "favicon.ico"]
 
         if path.startswith("assets/"):
             pass

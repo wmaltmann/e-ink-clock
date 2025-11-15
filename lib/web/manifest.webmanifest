@@ -1,1 +1,0 @@
-{"name":"E-Ink Clock","short_name":"Clock","description":"A simple E-Ink Clock app","start_url":"/","display":"standalone","background_color":"#202020","theme_color":"#2f95a2","lang":"en","scope":"/","icons":[{"src":"/public/icon-256.png","sizes":"256x256","type":"image/png"}]}
