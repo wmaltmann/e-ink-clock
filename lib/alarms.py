@@ -9,6 +9,7 @@ from lib.tone_player import TonePlayer
 from lib.noise_player import NoisePlayer
 from lib.audio_player import AudioPlayer
 from lib.config import Config
+from lib.timer import Timer
 
 try:
     from typing import List
@@ -16,8 +17,9 @@ except ImportError:
     pass
 
 class Alarms:
-    def __init__(self, display_context: DisplayContext, CLOCK: Clock, TONE_PLAYER: TonePlayer, AUDIO_PLAYER: AudioPlayer, NOISE_PLAYER: NoisePlayer, CONFIG: Config):
+    def __init__(self, display_context: DisplayContext, CLOCK: Clock, TONE_PLAYER: TonePlayer, AUDIO_PLAYER: AudioPlayer, NOISE_PLAYER: NoisePlayer, CONFIG: Config, TIMER: Timer):
         self._CONFIG = CONFIG
+        self._TIMER = TIMER
         self._TONE_PLAYER = TONE_PLAYER
         self._AUDIO_PLAYER = AUDIO_PLAYER
         self._NOISE_PLAYER = NOISE_PLAYER
@@ -32,7 +34,6 @@ class Alarms:
         self._next_alarm = self._get_next_alarm()
         self.alarm_triggered = False
         self.timer_enabled = False
-        self.timer_minutes = 0
         print(f"Alarm initialized. Enabled: {self.alarm_enabled}")
 
     def _switch_changed(self, pin):
@@ -40,25 +41,26 @@ class Alarms:
             self.alarm_enabled = pin.value() == 0
             if self.alarm_enabled:
                 if(self.timer_enabled):    
-                    self._next_alarm = self._get_timer_end(self.timer_minutes)
+                    self._next_alarm = self._get_timer_end(self._TIMER.get_interval())
                     self._DISPLAY_CONTEXT.update_timer(end_time=f"{self._next_alarm.hour_12}:{self._next_alarm.minute:02} {self._next_alarm.am_pm}")
                 else:
                     self._next_alarm = self._get_next_alarm()
                     self._DISPLAY_CONTEXT.update_alarm(self.alarm_enabled, self._next_alarm)
-                self._TONE_PLAYER.update_tone(self._next_alarm.frequency if self._next_alarm else 500,
+                self._TONE_PLAYER.update_tone(self._next_alarm.frequency if self._next_alarm else 440,
                                              300,
-                                             32767 // 4,
+                                             self._next_alarm.volume if self._next_alarm else 15,
                                              50,
                                              1.0,
                                              self._next_alarm.ramp if self._next_alarm else False)
-                self._AUDIO_PLAYER.update_audio(300, False)
+                self._AUDIO_PLAYER.update_audio(300, self._next_alarm.ramp if self._next_alarm else False,
+                                               self._next_alarm.volume if self._next_alarm else 15)
                 if self._NOISE_PLAYER.mode == NoisePlayer.MODE_BROWN:
                     self._NOISE_PLAYER.update(volume_percent=self._CONFIG.clock.noise_volume)
                     self._NOISE_PLAYER.enable()
             else:
                 self.alarm_triggered = False
                 self.timer_enabled = False
-                self.timer_minutes = 0
+                self._TIMER.reset_interval()
                 self._NOISE_PLAYER.disable()
                 self._TONE_PLAYER.disable()
                 self._AUDIO_PLAYER.disable()
@@ -163,12 +165,12 @@ class Alarms:
             name=f"Timer {duration_min} min",
             next_active_day=end_day,
             enabled=True,
-            tone=True,
-            vibrate=False,
-            audio=False,
-            ramp=True,
-            frequency=440,
-            volume=self._CONFIG.clock.timer_volume
+            tone=self._TIMER._tone,
+            vibrate=self._TIMER._vibrate,
+            audio=self._TIMER._audio,
+            ramp=self._TIMER._ramp,
+            frequency=self._TIMER._frequency,
+            volume=self._TIMER._volume
         )
 
 
@@ -224,25 +226,16 @@ class Alarms:
 
                 self.alarm_triggered = True
                 if self._next_alarm.tone:
+                    print("Enabling tone alarm")
                     self._TONE_PLAYER.enable()
                 elif self._next_alarm.audio:
+                    print("Enabling audio alarm")
                     self._AUDIO_PLAYER.enable()
 
     def toggle_timer(self):
-        if self.timer_minutes == 0:
-            self.timer_minutes = 5
+        timer_minutes = self._TIMER.toggle_interval()
+        if timer_minutes > 0:
             self.timer_enabled = True
-        elif self.timer_minutes == 5:
-            self.timer_minutes = 10
-        elif self.timer_minutes == 10:
-            self.timer_minutes = 15
-        elif self.timer_minutes == 15:
-            self.timer_minutes = 30
-        elif self.timer_minutes == 30:
-            self.timer_minutes = 45
-        elif self.timer_minutes == 45:
-            self.timer_minutes = 60
-        elif self.timer_minutes == 60:
-            self.timer_minutes = 0
+        else:
             self.timer_enabled = False
-        self._DISPLAY_CONTEXT.update_timer(self.timer_enabled, str(self.timer_minutes))
+        self._DISPLAY_CONTEXT.update_timer(self.timer_enabled, str(timer_minutes))

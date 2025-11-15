@@ -12,6 +12,7 @@ from lib.tone_player import TonePlayer
 from lib.noise_player import NoisePlayer
 from lib.audio_player import AudioPlayer
 from lib.model.display_context import DisplayContext
+from lib.timer import Timer
 
 DISPLAY_CONTEXT = DisplayContext()
 CONFIG = Config()
@@ -23,8 +24,9 @@ CLOCK = Clock(CONFIG, WIFI)
 TONE_PLAYER = TonePlayer()
 AUDIO_PLAYER = AudioPlayer()
 NOISE_PLAYER = NoisePlayer(CONFIG, DISPLAY_CONTEXT)
-ALARMS = Alarms(DISPLAY_CONTEXT, CLOCK, TONE_PLAYER, AUDIO_PLAYER, NOISE_PLAYER, CONFIG)
-WEB_SERVICE = WebService(WIFI, ALARMS, DISPLAY_CONTEXT, CONFIG)
+TIMER = Timer()
+ALARMS = Alarms(DISPLAY_CONTEXT, CLOCK, TONE_PLAYER, AUDIO_PLAYER, NOISE_PLAYER, CONFIG, TIMER)
+WEB_SERVICE = WebService(WIFI, ALARMS, DISPLAY_CONTEXT, CONFIG, TIMER)
 BUTTONS = Buttons(NIGHTLIGHT, WEB_SERVICE, NOISE_PLAYER, ALARMS)
 
 async def clock_task():

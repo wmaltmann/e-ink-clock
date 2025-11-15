@@ -181,3 +181,51 @@ def delete_alarm(ALARM, cl, alarm_id: str):
         cl.send(response)
         cl.close()
 
+def get_timer(TIMER, cl):
+    timer_info = {
+        "tone": TIMER._tone,
+        "vibrate": TIMER._vibrate,
+        "audio": TIMER._audio,
+        "ramp": TIMER._ramp,
+        "frequency": TIMER._frequency,
+        "volume": TIMER._volume,
+        "intervals": TIMER._intervals
+    }
+    
+    response = ujson.dumps(timer_info)
+    
+    cl.send("HTTP/1.1 200 OK\r\nContent-Type: application/json\r\n\r\n")
+    cl.send(response)
+    cl.close()
+
+def update_timer_param(TIMER, cl, param: str, value):
+    try:
+        if not hasattr(TIMER, f"_{param}"):
+            response = ujson.dumps({"error": f"Invalid parameter: {param}"})
+            cl.send("HTTP/1.1 400 Bad Request\r\nContent-Type: application/json\r\n\r\n")
+            cl.send(response)
+            cl.close()
+            return
+
+        if param in ["frequency", "volume"]:
+            value = int(value)
+        elif param in ["tone", "vibrate", "audio", "ramp"]:
+            value = value in ["true", "True", "1", True]
+        elif param == "intervals":
+            if isinstance(value, str):
+                value = [int(v.strip()) for v in value.split(",")]
+
+        setattr(TIMER, f"_{param}", value)
+
+        TIMER._save_timer()
+
+        response = ujson.dumps({"success": True})
+        cl.send("HTTP/1.1 200 OK\r\nContent-Type: application/json\r\n\r\n")
+        cl.send(response)
+        cl.close()
+
+    except Exception as e:
+        response = ujson.dumps({"error": str(e)})
+        cl.send("HTTP/1.1 500 Internal Server Error\r\nContent-Type: application/json\r\n\r\n")
+        cl.send(response)
+        cl.close()

@@ -6,8 +6,8 @@ from lib.wifi import Wifi
 from lib.alarms import Alarms
 from lib.model.display_context import DisplayContext
 from lib.config import Config
-from lib.web.not_found import not_found_page
-from lib.web.api import create_alarm, delete_alarm, get_alarm_page, get_alarms, update_alarm_param
+from lib.timer import Timer
+from lib.web.api import create_alarm, delete_alarm, get_alarm_page, get_alarms, get_timer, update_alarm_param, update_timer_param
 
 
 class WebService:
@@ -21,7 +21,7 @@ class WebService:
     ]
 
 
-    def __init__(self, WIFI: Wifi, ALARM: Alarms, display_context: DisplayContext, config: Config):
+    def __init__(self, WIFI: Wifi, ALARM: Alarms, display_context: DisplayContext, config: Config, TIMER: Timer):
         self.enabled = False
         self._running = True
         self._server_socket = None
@@ -29,6 +29,7 @@ class WebService:
         self._WIFI = WIFI
         self._DISPLAY_CONTEXT = display_context
         self._CONFIG = config
+        self._TIMER = TIMER
 
     async def run(self):
         while self._running:
@@ -115,6 +116,19 @@ class WebService:
                 elif b"GET /api/alarms" in request:
                     print("Serving: GET api/alarms")
                     get_alarms(self._ALARM, cl)
+
+                elif b"GET /api/timer" in request:
+                    print("Serving: GET api/timer")
+                    get_timer(self._TIMER, cl)
+
+                elif b"POST /api/timer" in request:
+                    print("Serving: POST api/timer")
+                    path_line = request.split(b"\r\n")[0]
+                    body = request.split(b"\r\n\r\n", 1)[1]
+                    data = ujson.loads(body.decode())
+
+                    for param, value in data.items():
+                        update_timer_param(self._TIMER, cl, param, value)
 
                 else:
                     try:

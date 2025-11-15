@@ -11,12 +11,12 @@ class AudioPlayer:
     def __init__(self, duration_sec=300, ramp=False):
         self.duration_sec = duration_sec
         self.ramp = ramp
-        self.fade_in_duration_sec = 30  # fade-in time in seconds
+        self.fade_in_duration_sec = 30
         self.sample_rate = self.SAMPLE_RATE
         self.bits = self.BITS
         self.enabled = False
         self._running = True
-        self.volume_percent = 15  # Target volume (0–100)
+        self.volume_percent = 15
 
     async def run(self):
         while self._running:
@@ -56,7 +56,7 @@ class AudioPlayer:
 
             async def play_wav_file_once_with_fade(filename, fade_in=False):
                 with open(filename, "rb") as f:
-                    f.read(44)  # skip WAV header
+                    f.read(44)
                     fade_start = time.ticks_ms()
                     while self.enabled:
                         wav_data = f.read(self.CHUNK_SIZE)
@@ -76,7 +76,6 @@ class AudioPlayer:
                         audio.write(scaled_data)
                         await asyncio.sleep_ms(0)
 
-            # Only fade-in once at start
             if self.ramp and self.enabled:
                 await play_wav_file_once_with_fade(FILENAME, fade_in=True)
             else:
