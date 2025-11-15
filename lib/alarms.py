@@ -1,5 +1,4 @@
 from lib.uuid import generate_uuid
-import time
 import ujson
 from machine import Pin
 from lib.model.display_context import DisplayContext

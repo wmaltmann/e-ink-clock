@@ -1,0 +1,16 @@
+{
+  "name": "E-Ink Clock",
+  "short_name": "E-Ink Clock",
+  "description": "A web app for configuring an e-ink clock device.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#202020",
+  "theme_color": "#2f95a2",
+  "icons": [
+    {
+      "src": "/icon-256.png",
+      "sizes": "256x256",
+      "type": "image/png"
+    }
+  ]
+}

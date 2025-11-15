@@ -7,7 +7,7 @@ from lib.alarms import Alarms
 from lib.model.display_context import DisplayContext
 from lib.config import Config
 from lib.web.not_found import not_found_page
-from lib.web.api import get_alarm_page, get_alarms, update_alarm_param
+from lib.web.api import create_alarm, delete_alarm, get_alarm_page, get_alarms, update_alarm_param
 
 
 class WebService:
@@ -81,14 +81,23 @@ class WebService:
                         timeout = True
                         break
 
-                if b"POST /api/alarms/" in request and b"/update" in request:
-                    print("Serving: GET api/alarms/<id>/update")
-                    # Parse URL
+                if b"POST /api/alarms/create" in request:
+                    print("Serving: POST api/alarms/create")
+                    create_alarm(self._ALARM, cl,)
+
+                if b"POST /api/alarms/" in request and b"/delete" in request:
+                    print("Serving: POST api/alarms/<id>/delete")
                     path_line = request.split(b"\r\n")[0]
                     path = path_line.split(b" ")[1]
                     alarm_id = path.split(b"/")[3].decode()
 
-                    # Parse JSON body
+                    delete_alarm(self._ALARM, cl, alarm_id)
+                
+                if b"POST /api/alarms/" in request and b"/update" in request:
+                    print("Serving: GET api/alarms/<id>/update")
+                    path_line = request.split(b"\r\n")[0]
+                    path = path_line.split(b" ")[1]
+                    alarm_id = path.split(b"/")[3].decode()
                     body = request.split(b"\r\n\r\n", 1)[1]
                     data = ujson.loads(body.decode())
 
@@ -102,6 +111,7 @@ class WebService:
                     path_line = request.split(b"\r\n")[0]
                     alarm_id = path_line.split(b"/alarms/")[1].split(b" ")[0].decode()
                     get_alarm_page(self._ALARM, cl, alarm_id)
+                
                 elif b"GET /api/alarms" in request:
                     print("Serving: GET api/alarms")
                     get_alarms(self._ALARM, cl)
@@ -151,10 +161,12 @@ class WebService:
     def _serve_static(self, cl, path):
         if path.startswith("/"):
             path = path[1:]
+        paths = ["registerSW.js", "icon-256.png", "manifest.json", "manifest.webmanifest", "favicon.ico","sw.js", "workbox-5ffe50d4.js"]
+
         if path.startswith("assets/"):
             pass
-        elif path == "favicon.ico":
-            path = "assets/favicon.ico"
+        elif path in paths:
+            pass
         else:
             path = "index.html"
 
