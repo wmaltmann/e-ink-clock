@@ -6,7 +6,6 @@ class NetworkSettings:
         self.wifi_password = password
         self.wifi_hostname = hostname
 
-
 class ClockSettings:
     def __init__(self, clock_display_mode: str = "debug") -> None:
         self.clock_display_mode = clock_display_mode
@@ -14,19 +13,8 @@ class ClockSettings:
         self.daylight_saving = True
         self.noise_mode = "None"
         self.noise_volume = 5
-        self.timer_volume = 5
-
 
 class Config:
-    """Configuration manager with async, lock‑protected file saves.
-
-    All update* methods schedule an async save task so that configuration
-    persistence happens in the background without blocking the caller.
-    The save coroutine acquires a lock, writes one line at a time, and
-    yields control after each write to minimise CPU hogging on single‑core
-    MicroPython boards.
-    """
-
     def __init__(self, filepath: str = "/.config") -> None:
         self.config_filepath = filepath
         self.network = NetworkSettings()
@@ -55,8 +43,6 @@ class Config:
                             self.clock.noise_mode = value if value in ("None", "Brown") else "None"
                         elif key == "NOISE_VOLUME":
                             self.clock.noise_volume = int(value)
-                        elif key == "TIMER_VOLUME":
-                            self.clock.timer_volume = int(value)
                         elif key == "TIMEZONE":
                             self.clock.timezone = value
                         elif key == "DAYLIGHT_SAVING":
@@ -65,11 +51,6 @@ class Config:
             print(f"Error reading config file: {e}")
 
     async def _save_config(self) -> None:
-        """Write current settings to disk serially under a lock.
-
-        Yields to the event loop after each line so the save operation does
-        not monopolise the CPU.
-        """
         async with self._save_lock:
             try:
                 with open(self.config_filepath, "w") as f:
@@ -88,8 +69,6 @@ class Config:
                     f.write(f"NOISE_MODE={self.clock.noise_mode}\n")
                     await asyncio.sleep_ms(10)
                     f.write(f"NOISE_VOLUME={self.clock.noise_volume}\n")
-                    await asyncio.sleep_ms(10)
-                    f.write(f"TIMER_VOLUME={self.clock.timer_volume}\n")
             except OSError as e:
                 print(f"Error saving config file: {e}")
 
