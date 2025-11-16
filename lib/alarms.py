@@ -182,13 +182,14 @@ class Alarms:
         self._alarms.append(alarm)
         self.save_alarms()
 
-    def remove_alarm(self, name):
+    def remove_alarm(self, alarm_id: str):
         original_count = len(self._alarms)
-        self._alarms = [alarm for alarm in self._alarms if alarm.name != name]
+        self._alarms = [alarm for alarm in self._alarms if alarm.id != alarm_id]
         changed = len(self._alarms) < original_count
         if changed:
             self.save_alarms()
         return changed
+
     
     def update_alarm(self, new_alarm):
         if not isinstance(new_alarm, Alarm):

@@ -158,18 +158,7 @@ def create_alarm(ALARM, cl):
 
 def delete_alarm(ALARM, cl, alarm_id: str):
     try:
-        alarm = next((a for a in ALARM.get_alarms() if a.id == alarm_id), None)
-
-        if alarm is None:
-            response = ujson.dumps({"error": "Alarm not found"})
-            cl.send("HTTP/1.1 404 Not Found\r\nContent-Type: application/json\r\n\r\n")
-            cl.send(response)
-            cl.close()
-            return
-
-        ALARM.get_alarms().remove(alarm)
-        ALARM.save_alarms()
-
+        ALARM.remove_alarm(alarm_id)
         response = ujson.dumps({"success": True})
         cl.send("HTTP/1.1 200 OK\r\nContent-Type: application/json\r\n\r\n")
         cl.send(response)
