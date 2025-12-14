@@ -31,6 +31,8 @@ class Buttons:
         self._button3_pin.irq(trigger=Pin.IRQ_FALLING | Pin.IRQ_RISING, handler=self._button_3_callback)
         self._button4_pin.irq(trigger=Pin.IRQ_FALLING | Pin.IRQ_RISING, handler=self._button_4_callback)
 
+        self._short_press_time_ms = 200
+
         print(f"Buttons initialized. Button states: {self.button1}, {self.button2}, {self.button3}, {self.button4}")
 
     def _button_1_callback(self, pin: Pin):
@@ -45,16 +47,14 @@ class Buttons:
 
     def _button_2_callback(self, pin: Pin):
         now = time.ticks_ms()
-        if time.ticks_diff(now, self._last_time_button2) > 50:
-            new_state = pin.value() == 0
-            if self.button2 != new_state:
-                self.button2 = new_state
-                if new_state:
-                    if self._NOISE_PLAYER.mode == NoisePlayer.MODE_BROWN:
-                        self._NOISE_PLAYER.set_mode(NoisePlayer.MODE_NONE)
-                    else:
-                        self._NOISE_PLAYER.set_mode(NoisePlayer.MODE_BROWN)
-            self._last_time_button2 = now
+        if time.ticks_diff(now, self._last_time_button2) > self._short_press_time_ms:
+            self.button2 = not self.button2
+            if self.button2:
+                if self._NOISE_PLAYER.mode == NoisePlayer.MODE_BROWN:
+                    self._NOISE_PLAYER.set_mode(NoisePlayer.MODE_NONE)
+                else:
+                    self._NOISE_PLAYER.set_mode(NoisePlayer.MODE_BROWN)
+        self._last_time_button2 = now
 
     def _button_3_callback(self, pin: Pin):
         now = time.ticks_ms()
@@ -71,10 +71,7 @@ class Buttons:
 
     def _button_4_callback(self, pin: Pin):
         now = time.ticks_ms()
-        if time.ticks_diff(now, self._last_time_button4) > 50:
-            new_state = pin.value() == 0
-            if self.button4 != new_state:
-                self.button4 = new_state
-                if new_state:
-                    self._NIGHTLIGHT.on(not self._NIGHTLIGHT.is_on())
-            self._last_time_button4 = now
+        if time.ticks_diff(now, self._last_time_button4) > self._short_press_time_ms:
+            self.button4 = not self.button4
+            self._NIGHTLIGHT.on(self.button4)
+        self._last_time_button4 = now

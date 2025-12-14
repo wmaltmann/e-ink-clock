@@ -1,5 +1,6 @@
 from lib.uuid import generate_uuid
 import ujson
+import time
 from machine import Pin
 from lib.model.display_context import DisplayContext
 from lib.clock import Clock
@@ -25,6 +26,7 @@ class Alarms:
         self._NOISE_PLAYER = NOISE_PLAYER
         self._pin = Pin(22, Pin.IN, Pin.PULL_UP)
         self.alarm_enabled = self._pin.value() == 0
+        self._last_time_switch = 0
         self._pin.irq(trigger=Pin.IRQ_FALLING | Pin.IRQ_RISING, handler=self._switch_changed)
         self._CLOCK = CLOCK
         self._DISPLAY_CONTEXT = display_context
@@ -37,35 +39,38 @@ class Alarms:
         print(f"Alarm initialized. Enabled: {self.alarm_enabled}")
 
     def _switch_changed(self, pin):
-        if self.alarm_enabled != (pin.value() == 0):
-            self.alarm_enabled = pin.value() == 0
-            if self.alarm_enabled:
-                if(self.timer_enabled):    
-                    self._next_alarm = self._get_timer_end(self._TIMER.get_interval())
-                    self._DISPLAY_CONTEXT.update_timer(end_time=f"{self._next_alarm.hour_12}:{self._next_alarm.minute:02} {self._next_alarm.am_pm}")
+        now = time.ticks_ms()
+        if time.ticks_diff(now, self._last_time_switch) > 50:
+            new_state = pin.value() == 0
+            if self.alarm_enabled != new_state:
+                self.alarm_enabled = new_state
+                if self.alarm_enabled:
+                    if(self.timer_enabled):    
+                        self._next_alarm = self._get_timer_end(self._TIMER.get_interval())
+                        self._DISPLAY_CONTEXT.update_timer(end_time=f"{self._next_alarm.hour_12}:{self._next_alarm.minute:02} {self._next_alarm.am_pm}")
+                    else:
+                        self._next_alarm = self._get_next_alarm()
+                        self._DISPLAY_CONTEXT.update_alarm(self.alarm_enabled, self._next_alarm)
+                    self._TONE_PLAYER.update_tone(self._next_alarm.frequency if self._next_alarm else 440,
+                                                300,
+                                                self._next_alarm.volume if self._next_alarm else 15,
+                                                50,
+                                                1.0,
+                                                self._next_alarm.ramp if self._next_alarm else False)
+                    self._AUDIO_PLAYER.update_audio(300, self._next_alarm.ramp if self._next_alarm else False,
+                                                self._next_alarm.volume if self._next_alarm else 15)
+                    if self._NOISE_PLAYER.mode == NoisePlayer.MODE_BROWN:
+                        self._NOISE_PLAYER.update(volume_percent=self._CONFIG.clock.noise_volume)
+                        self._NOISE_PLAYER.enable()
                 else:
-                    self._next_alarm = self._get_next_alarm()
-                    self._DISPLAY_CONTEXT.update_alarm(self.alarm_enabled, self._next_alarm)
-                self._TONE_PLAYER.update_tone(self._next_alarm.frequency if self._next_alarm else 440,
-                                             300,
-                                             self._next_alarm.volume if self._next_alarm else 15,
-                                             50,
-                                             1.0,
-                                             self._next_alarm.ramp if self._next_alarm else False)
-                self._AUDIO_PLAYER.update_audio(300, self._next_alarm.ramp if self._next_alarm else False,
-                                               self._next_alarm.volume if self._next_alarm else 15)
-                if self._NOISE_PLAYER.mode == NoisePlayer.MODE_BROWN:
-                    self._NOISE_PLAYER.update(volume_percent=self._CONFIG.clock.noise_volume)
-                    self._NOISE_PLAYER.enable()
-            else:
-                self.alarm_triggered = False
-                self.timer_enabled = False
-                self._TIMER.reset_interval()
-                self._NOISE_PLAYER.disable()
-                self._TONE_PLAYER.disable()
-                self._AUDIO_PLAYER.disable()
-                self._DISPLAY_CONTEXT.update_timer(False, "", "")
-                self._DISPLAY_CONTEXT.update_alarm(False, None)
+                    self.alarm_triggered = False
+                    self.timer_enabled = False
+                    self._TIMER.reset_interval()
+                    self._NOISE_PLAYER.disable()
+                    self._TONE_PLAYER.disable()
+                    self._AUDIO_PLAYER.disable()
+                    self._DISPLAY_CONTEXT.update_timer(False, "", "")
+                    self._DISPLAY_CONTEXT.update_alarm(False, None)
 
     def _load_alarms(self):
         try:
