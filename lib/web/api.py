@@ -1,5 +1,6 @@
 from lib import uuid
 from lib.model.alarm import Alarm
+from lib.timezone import Timezones
 import ujson
 
 def get_alarms(ALARM, cl):
@@ -218,3 +219,79 @@ def update_timer_param(TIMER, cl, param: str, value):
         cl.send("HTTP/1.1 500 Internal Server Error\r\nContent-Type: application/json\r\n\r\n")
         cl.send(response)
         cl.close()
+
+def get_config(CONFIG, cl):
+    config_info = {
+        "ssid": CONFIG.network.wifi_ssid,
+        "password": CONFIG.network.wifi_password,
+        "hostname": CONFIG.network.wifi_hostname,
+        #"clock_display_mode": CONFIG.clock.clock_display_mode,
+        "timezone": CONFIG.clock.timezone,
+        "daylight": CONFIG.clock.daylight_saving,
+        #"noise_mode": CONFIG.clock.noise_mode,
+        "volume": CONFIG.clock.noise_volume
+    }
+    
+    response = ujson.dumps(config_info)
+    
+    cl.send("HTTP/1.1 200 OK\r\nContent-Type: application/json\r\n\r\n")
+    cl.send(response)
+    cl.close()
+
+def update_config_param(CONFIG, cl, param: str, value):
+    try:
+        # Handle network parameters
+        if param == "ssid":
+            CONFIG.update_network_settings(value, CONFIG.network.wifi_password, CONFIG.network.wifi_hostname)
+        elif param == "password":
+            CONFIG.update_network_settings(CONFIG.network.wifi_ssid, value, CONFIG.network.wifi_hostname)
+        elif param == "hostname":
+            CONFIG.update_network_settings(CONFIG.network.wifi_ssid, CONFIG.network.wifi_password, value)
+        # Handle clock parameters
+        # elif param == "clock_display_mode":
+        #     CONFIG.update_clock_settings(value)
+        # elif param == "noise_mode":
+        #     CONFIG.update_noise_mode(value)
+        elif param == "volume":
+            CONFIG.clock.noise_volume = int(value)
+            import asyncio
+            asyncio.create_task(CONFIG._save_config())
+        elif param == "timezone":
+            CONFIG.clock.timezone = value
+            import asyncio
+            asyncio.create_task(CONFIG._save_config())
+        elif param == "daylight":
+            CONFIG.clock.daylight_saving = value in ["true", "True", "1", True]
+            import asyncio
+            asyncio.create_task(CONFIG._save_config())
+        else:
+            response = ujson.dumps({"error": f"Invalid parameter: {param}"})
+            cl.send("HTTP/1.1 400 Bad Request\r\nContent-Type: application/json\r\n\r\n")
+            cl.send(response)
+            cl.close()
+            return
+
+        response = ujson.dumps({"success": True})
+        cl.send("HTTP/1.1 200 OK\r\nContent-Type: application/json\r\n\r\n")
+        cl.send(response)
+        cl.close()
+
+    except Exception as e:
+        response = ujson.dumps({"error": str(e)})
+        cl.send("HTTP/1.1 500 Internal Server Error\r\nContent-Type: application/json\r\n\r\n")
+        cl.send(response)
+        cl.close()
+
+def get_timezone_list(cl):
+    timezones_list = []
+    for key, value in Timezones.all().items():
+        timezones_list.append({
+            "short_name": key,
+            "name": value["name"]
+        })
+    
+    response = ujson.dumps(timezones_list)
+    
+    cl.send("HTTP/1.1 200 OK\r\nContent-Type: application/json\r\n\r\n")
+    cl.send(response)
+    cl.close()

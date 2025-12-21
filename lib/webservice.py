@@ -7,7 +7,7 @@ from lib.alarms import Alarms
 from lib.model.display_context import DisplayContext
 from lib.config import Config
 from lib.timer import Timer
-from lib.web.api import create_alarm, delete_alarm, get_alarm_page, get_alarms, get_timer, update_alarm_param, update_timer_param
+from lib.web.api import create_alarm, delete_alarm, get_alarm_page, get_alarms, get_config, get_timer, get_timezone_list, update_alarm_param, update_config_param, update_timer_param
 
 
 class WebService:
@@ -129,6 +129,25 @@ class WebService:
                 elif b"GET /api/timer" in request:
                     print("Serving: GET api/timer")
                     get_timer(self._TIMER, cl)
+
+                elif b"POST /api/settings/update" in request:
+                    print("Serving: POST api/timer/update")
+                    path_line = request.split(b"\r\n")[0]
+                    body = request.split(b"\r\n\r\n", 1)[1]
+                    data = ujson.loads(body.decode())
+
+                    param = data.get("param")
+                    value = data.get("value")
+
+                    update_config_param(self._CONFIG, cl, param, value)
+
+                elif b"GET /api/settings/timezones" in request:
+                    print("Serving: GET api/settings/timezones")
+                    get_timezone_list(cl)
+
+                elif b"GET /api/settings" in request:
+                    print("Serving: GET api/settings")
+                    get_config(self._CONFIG, cl)
 
                 else:
                     try:
