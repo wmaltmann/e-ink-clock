@@ -21,10 +21,11 @@ class Buttons:
         self.button3 = self._button3_pin.value() == 0
         self.button4 = self._button4_pin.value() == 0
 
-        self._last_time_button1 = 0
-        self._last_time_button2 = 0
-        self._last_time_button3 = 0
-        self._last_time_button4 = 0
+        now = time.ticks_ms()
+        self._last_time_button1 = now
+        self._last_time_button2 = now
+        self._last_time_button3 = now
+        self._last_time_button4 = now
 
         self._button1_pin.irq(trigger=Pin.IRQ_FALLING | Pin.IRQ_RISING, handler=self._button_1_callback)
         self._button2_pin.irq(trigger=Pin.IRQ_FALLING | Pin.IRQ_RISING, handler=self._button_2_callback)
@@ -63,6 +64,7 @@ class Buttons:
             if self.button3 != new_state:
                 self.button3 = new_state
                 if new_state:
+                    print("Button 3 pressed. Toggling web service.")
                     if self._WEB_SERVICE.enabled: 
                         self._WEB_SERVICE.disable()
                     else:
