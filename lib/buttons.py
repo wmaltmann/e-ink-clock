@@ -32,25 +32,25 @@ class Buttons:
         self._button3_pin.irq(trigger=Pin.IRQ_FALLING | Pin.IRQ_RISING, handler=self._button_3_callback)
         self._button4_pin.irq(trigger=Pin.IRQ_FALLING | Pin.IRQ_RISING, handler=self._button_4_callback)
 
-        self._short_press_time_ms = 200
+        self._debounce_time_ms = 500
 
         print(f"Buttons initialized. Button states: {self.button1}, {self.button2}, {self.button3}, {self.button4}")
 
     def _button_1_callback(self, pin: Pin):
         now = time.ticks_ms()
-        if time.ticks_diff(now, self._last_time_button1) > 50:
+        if time.ticks_diff(now, self._last_time_button1) > self._debounce_time_ms:
             new_state = pin.value() == 0
-            if self.button1 != new_state:
-                self.button1 = new_state
-                if(new_state):
-                    self._ALARMS.toggle_timer()
+            if(new_state):
+                print("Button 1: Toggling timer")
+                self._ALARMS.toggle_timer()
             self._last_time_button1 = now
 
     def _button_2_callback(self, pin: Pin):
         now = time.ticks_ms()
-        if time.ticks_diff(now, self._last_time_button2) > self._short_press_time_ms:
-            self.button2 = not self.button2
-            if self.button2:
+        if time.ticks_diff(now, self._last_time_button2) > self._debounce_time_ms:
+            new_state = pin.value() == 0
+            if new_state:
+                print("Button 2: Toggling noise player mode.")
                 if self._NOISE_PLAYER.mode == NoisePlayer.MODE_BROWN:
                     self._NOISE_PLAYER.set_mode(NoisePlayer.MODE_NONE)
                 else:
@@ -59,12 +59,12 @@ class Buttons:
 
     def _button_3_callback(self, pin: Pin):
         now = time.ticks_ms()
-        if time.ticks_diff(now, self._last_time_button3) > 50:
+        if time.ticks_diff(now, self._last_time_button3) > self._debounce_time_ms:
             new_state = pin.value() == 0
             if self.button3 != new_state:
                 self.button3 = new_state
                 if new_state:
-                    print("Button 3 pressed. Toggling web service.")
+                    print("Button 3: Toggling web service.")
                     if self._WEB_SERVICE.enabled: 
                         self._WEB_SERVICE.disable()
                     else:
@@ -73,7 +73,9 @@ class Buttons:
 
     def _button_4_callback(self, pin: Pin):
         now = time.ticks_ms()
-        if time.ticks_diff(now, self._last_time_button4) > self._short_press_time_ms:
-            self.button4 = not self.button4
-            self._NIGHTLIGHT.on(self.button4)
-        self._last_time_button4 = now
+        if time.ticks_diff(now, self._last_time_button4) > self._debounce_time_ms:
+            new_state = pin.value() == 0
+            if(new_state):
+                print("Button 4: Toggling nightlight")
+                self._NIGHTLIGHT.on(not self._NIGHTLIGHT.is_on())
+                self._last_time_button4 = now

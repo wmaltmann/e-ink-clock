@@ -40,10 +40,19 @@ class WebService:
 
     def enable(self):
         if not self.enabled:
+            asyncio.create_task(self._async_enable())
+
+    async def _async_enable(self):
+        if not self.enabled:
+            print("Enabling web service...")
             self._DISPLAY_CONTEXT.update_web_service(self.WEB_SERVICE_CONNECTING,"")
+            await asyncio.sleep_ms(1000)
+            print("Connecting to WiFi...")
             self._WIFI.connect()
+            self._DISPLAY_CONTEXT.update_web_service(self.WEB_SERVICE_ON, self._WIFI.ifconfig()[0])
+            await asyncio.sleep_ms(1000)
+            print("Starting web server...")
             self.enabled = True
-            
 
     def disable(self):
         if self.enabled:
@@ -60,8 +69,7 @@ class WebService:
         self._server_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
         self._server_socket.bind(addr)
         self._server_socket.listen(1)
-        self._DISPLAY_CONTEXT.update_web_service(self.WEB_SERVICE_ON, self._WIFI.ifconfig()[0])
-
+        
         while self.enabled:
             cl = None
             request = None
