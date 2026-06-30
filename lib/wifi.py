@@ -1,8 +1,11 @@
 import network
 import time
 from lib.config import Config
+from lib.model.log import logger
 
 class Wifi:
+    CONTEXT = "WiFi"
+
     def __init__(self, CONFIG: Config):
         self.wlan = network.WLAN(network.STA_IF)
         self.wlan.active(False)
@@ -12,22 +15,22 @@ class Wifi:
     def set_hostname(self, hostname: str):
         if hostname:
             self.wlan.config(hostname=hostname)
-            print(f"Hostname set to: {hostname}")
+            logger.info(f"Hostname set to: {hostname}", self.CONTEXT)
     
     def connect(self, timeout: int = 30) -> bool:
         self.wlan.active(True)
         if self.is_connected():
-            print("Already connected to Wi-Fi")
+            logger.info("Already connected to Wi-Fi", self.CONTEXT)
             return True
         
         available_networks = self.wlan.scan()
         ssid_found = any(net[0].decode('utf-8') == self.CONFIG.get_network_settings().wifi_ssid for net in available_networks)
         
         if not ssid_found:
-            print(f"Error: SSID '{self.CONFIG.get_network_settings().wifi_ssid}' not found.")
+            logger.error(f"SSID '{self.CONFIG.get_network_settings().wifi_ssid}' not found.", self.CONTEXT)
             return False
 
-        print(f"Connecting to Wi-Fi SSID: {self.CONFIG.get_network_settings().wifi_ssid}")
+        logger.info(f"Connecting to SSID: {self.CONFIG.get_network_settings().wifi_ssid}", self.CONTEXT)
         try:
             self.wlan.connect(self.CONFIG.get_network_settings().wifi_ssid, self.CONFIG.get_network_settings().wifi_password)
             start_time = time.time()
@@ -35,12 +38,12 @@ class Wifi:
                 if time.time() - start_time > timeout:
                     raise Exception("Connection attempt timed out. Check your password.")
                 time.sleep(1)
-            print("Connected to Wi-Fi")
-            print("Network config:", self.wlan.ifconfig())
+            logger.info("Connected to Wi-Fi", self.CONTEXT)
+            logger.info(f"Network config: {self.wlan.ifconfig()}", self.CONTEXT)
             return True
             
         except Exception as e:
-            print(f"Failed to connect to Wi-Fi: {e}")
+            logger.error(f"Failed to connect: {e}", self.CONTEXT)
             return False
 
     def disconnect(self):
@@ -48,7 +51,7 @@ class Wifi:
             self.wlan.disconnect()   # <-- Properly disconnect first
         if self.wlan.active():
             self.wlan.active(False)
-        print("Wi-Fi interface disabled")
+        logger.info("Wi-Fi interface disabled", self.CONTEXT)
 
 
     def is_connected(self) -> bool:

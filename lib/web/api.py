@@ -295,3 +295,17 @@ def get_timezone_list(cl):
     cl.send("HTTP/1.1 200 OK\r\nContent-Type: application/json\r\n\r\n")
     cl.send(response)
     cl.close()
+
+def get_log(cl, log_file: str = "/log.txt"):
+    try:
+        with open(log_file, "r") as f:
+            lines = [line.rstrip("\n") for line in f if line.strip()]
+        response = ujson.dumps({"lines": lines})
+        cl.send("HTTP/1.1 200 OK\r\nContent-Type: application/json\r\n\r\n")
+        cl.send(response)
+        cl.close()
+    except OSError:
+        response = ujson.dumps({"lines": []})
+        cl.send("HTTP/1.1 200 OK\r\nContent-Type: application/json\r\n\r\n")
+        cl.send(response)
+        cl.close()

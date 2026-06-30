@@ -5,6 +5,7 @@ from lib.wifi import Wifi
 from lib.model.datetime import Datetime
 from lib.config import Config
 from lib.timezone import Timezones
+from lib.model.log import logger
 
 DS3231_I2C_ADDR = 0x68
 
@@ -73,12 +74,12 @@ class Clock:
 
     def set_time_from_ntp(self):
         if not self.WIFI:
-            print("Wi-Fi not initialized, cannot set time from NTP")
+            logger.warn("Wi-Fi not initialized, cannot set time from NTP", "Clock")
             return
         if self.WIFI.connect():
             try:
                 ntptime.settime()  # Sets system time in UTC
-                print('Time synchronized with NTP')
+                logger.info("Time synchronized with NTP", "Clock")
 
                 # Get UTC time to write to RTC
                 now = time.gmtime()
@@ -89,14 +90,12 @@ class Clock:
 
                 self._set_rtc_time(year, month, day, ds3231_weekday, hour, minute, second)
                 self.time_source_sys = True
-                print("RTC time set from NTP")
+                logger.info("RTC time set from NTP", "Clock")
                 self.WIFI.disconnect()
             except Exception as e:
-                print('Failed to sync time with NTP:', e)
+                logger.error(f"Failed to sync time with NTP: {e}", "Clock")
                 self.time_source_sys = False
                 self.WIFI.disconnect()
         else:
-            print("Setting time from RTC")
+            logger.warn("Wi-Fi connect failed, setting time from RTC", "Clock")
             self.time_source_sys = False
-
-        

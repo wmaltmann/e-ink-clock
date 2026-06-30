@@ -7,7 +7,8 @@ from lib.alarms import Alarms
 from lib.model.display_context import DisplayContext
 from lib.config import Config
 from lib.timer import Timer
-from lib.web.api import create_alarm, delete_alarm, get_alarm_page, get_alarms, get_config, get_timer, get_timezone_list, update_alarm_param, update_config_param, update_timer_param
+from lib.model.log import logger
+from lib.web.api import create_alarm, delete_alarm, get_alarm_page, get_alarms, get_config, get_log, get_timer, get_timezone_list, update_alarm_param, update_config_param, update_timer_param
 
 
 class WebService:
@@ -19,6 +20,7 @@ class WebService:
         WEB_SERVICE_OFF,
         WEB_SERVICE_CONNECTING
     ]
+    CONTEXT = "WebService"
 
 
     def __init__(self, WIFI: Wifi, ALARM: Alarms, display_context: DisplayContext, config: Config, TIMER: Timer):
@@ -44,14 +46,14 @@ class WebService:
 
     async def _async_enable(self):
         if not self.enabled:
-            print("Enabling web service...")
+            logger.info("Enabling web service...", self.CONTEXT)
             self._DISPLAY_CONTEXT.update_web_service(self.WEB_SERVICE_CONNECTING,"")
             await asyncio.sleep_ms(1000)
-            print("Connecting to WiFi...")
+            logger.info("Connecting to WiFi...", self.CONTEXT)
             self._WIFI.connect()
             self._DISPLAY_CONTEXT.update_web_service(self.WEB_SERVICE_ON, self._WIFI.ifconfig()[0])
             await asyncio.sleep_ms(1000)
-            print("Starting web server...")
+            logger.info("Starting web server...", self.CONTEXT)
             self.enabled = True
 
     def disable(self):
@@ -89,11 +91,11 @@ class WebService:
                         break
 
                 if b"POST /api/alarms/create" in request:
-                    print("Serving: POST api/alarms/create")
+                    logger.info("Serving: POST api/alarms/create", self.CONTEXT)
                     create_alarm(self._ALARM, cl,)
 
                 elif b"POST /api/alarms/" in request and b"/delete" in request:
-                    print("Serving: POST api/alarms/<id>/delete")
+                    logger.info("Serving: POST api/alarms/<id>/delete", self.CONTEXT)
                     path_line = request.split(b"\r\n")[0]
                     path = path_line.split(b" ")[1]
                     alarm_id = path.split(b"/")[3].decode()
@@ -101,7 +103,7 @@ class WebService:
                     delete_alarm(self._ALARM, cl, alarm_id)
                 
                 elif b"POST /api/alarms/" in request and b"/update" in request:
-                    print("Serving: GET api/alarms/<id>/update")
+                    logger.info("Serving: POST api/alarms/<id>/update", self.CONTEXT)
                     path_line = request.split(b"\r\n")[0]
                     path = path_line.split(b" ")[1]
                     alarm_id = path.split(b"/")[3].decode()
@@ -114,17 +116,17 @@ class WebService:
                     update_alarm_param(self._ALARM, cl, alarm_id, param, value)
 
                 elif b"GET /api/alarms/" in request:
-                    print("Serving: GET api/alarms/<id>")
+                    logger.info("Serving: GET api/alarms/<id>", self.CONTEXT)
                     path_line = request.split(b"\r\n")[0]
                     alarm_id = path_line.split(b"/alarms/")[1].split(b" ")[0].decode()
                     get_alarm_page(self._ALARM, cl, alarm_id)
                 
                 elif b"GET /api/alarms" in request:
-                    print("Serving: GET api/alarms")
+                    logger.info("Serving: GET api/alarms", self.CONTEXT)
                     get_alarms(self._ALARM, cl)
 
                 elif b"POST /api/timer/update" in request:
-                    print("Serving: POST api/timer/update")
+                    logger.info("Serving: POST api/timer/update", self.CONTEXT)
                     path_line = request.split(b"\r\n")[0]
                     body = request.split(b"\r\n\r\n", 1)[1]
                     data = ujson.loads(body.decode())
@@ -135,11 +137,11 @@ class WebService:
                     update_timer_param(self._TIMER, cl, param, value)
 
                 elif b"GET /api/timer" in request:
-                    print("Serving: GET api/timer")
+                    logger.info("Serving: GET api/timer", self.CONTEXT)
                     get_timer(self._TIMER, cl)
 
                 elif b"POST /api/settings/update" in request:
-                    print("Serving: POST api/timer/update")
+                    logger.info("Serving: POST api/settings/update", self.CONTEXT)
                     path_line = request.split(b"\r\n")[0]
                     body = request.split(b"\r\n\r\n", 1)[1]
                     data = ujson.loads(body.decode())
@@ -150,12 +152,16 @@ class WebService:
                     update_config_param(self._CONFIG, cl, param, value)
 
                 elif b"GET /api/settings/timezones" in request:
-                    print("Serving: GET api/settings/timezones")
+                    logger.info("Serving: GET api/settings/timezones", self.CONTEXT)
                     get_timezone_list(cl)
 
                 elif b"GET /api/settings" in request:
-                    print("Serving: GET api/settings")
+                    logger.info("Serving: GET api/settings", self.CONTEXT)
                     get_config(self._CONFIG, cl)
+
+                elif b"GET /api/log" in request:
+                    logger.info("Serving: GET api/log", self.CONTEXT)
+                    get_log(cl)
 
                 else:
                     try:
@@ -164,20 +170,20 @@ class WebService:
                         path = parts[1].decode()
                     except:
                         path = "/"
-                    print("Serving Static:", path)
+                    logger.info(f"Serving static: {path}", self.CONTEXT)
                     self._serve_static(cl, path)
 
             except OSError as e:
                 if e.args[0] != 110:
-                    print("Socket error:", e)
+                    logger.error(f"Socket error: {e}", self.CONTEXT)
             except Exception as e:
-                print("Error:", e)
+                logger.error(f"Request error: {e}", self.CONTEXT)
             finally:
                 if cl:
                     try:
                         cl.close()
                     except Exception as e:
-                        print("Error closing socket:", e)
+                        logger.error(f"Error closing socket: {e}", self.CONTEXT)
                 request = None
                 cl = None
                 gc.collect()
@@ -189,7 +195,7 @@ class WebService:
             except:
                 pass
             self._server_socket = None
-            print("Web server stopped")
+            logger.info("Web server stopped", self.CONTEXT)
         self._WIFI.disconnect()
         self._DISPLAY_CONTEXT.update_web_service(self.WEB_SERVICE_OFF, "")
 

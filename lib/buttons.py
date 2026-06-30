@@ -4,6 +4,7 @@ from lib.nightlight import Nightlight
 from lib.webservice import WebService
 from lib.noise_player import NoisePlayer
 from lib.alarms import Alarms
+from lib.model.log import logger
 
 class Buttons:
     def __init__(self, NIGHTLIGHT:Nightlight, WEB_SERVICE: WebService, NoisePlayer: NoisePlayer, Alarms: Alarms):
@@ -34,14 +35,14 @@ class Buttons:
 
         self._debounce_time_ms = 500
 
-        print(f"Buttons initialized. Button states: {self.button1}, {self.button2}, {self.button3}, {self.button4}")
+        logger.info(f"Buttons initialized. Button states: {self.button1}, {self.button2}, {self.button3}, {self.button4}", "Buttons")
 
     def _button_1_callback(self, pin: Pin):
         now = time.ticks_ms()
         if time.ticks_diff(now, self._last_time_button1) > self._debounce_time_ms:
             new_state = pin.value() == 0
             if(new_state):
-                print("Button 1: Toggling timer")
+                logger.info("Button 1 Pressed: Toggling timer", "Buttons")
                 self._ALARMS.toggle_timer()
             self._last_time_button1 = now
 
@@ -50,25 +51,23 @@ class Buttons:
         if time.ticks_diff(now, self._last_time_button2) > self._debounce_time_ms:
             new_state = pin.value() == 0
             if new_state:
-                print("Button 2: Toggling noise player mode.")
+                logger.info("Button 2 Pressed: Toggling noise player", "Buttons")
                 if self._NOISE_PLAYER.mode == NoisePlayer.MODE_BROWN:
                     self._NOISE_PLAYER.set_mode(NoisePlayer.MODE_NONE)
                 else:
                     self._NOISE_PLAYER.set_mode(NoisePlayer.MODE_BROWN)
-        self._last_time_button2 = now
+            self._last_time_button2 = now
 
     def _button_3_callback(self, pin: Pin):
         now = time.ticks_ms()
         if time.ticks_diff(now, self._last_time_button3) > self._debounce_time_ms:
             new_state = pin.value() == 0
-            if self.button3 != new_state:
-                self.button3 = new_state
-                if new_state:
-                    print("Button 3: Toggling web service.")
-                    if self._WEB_SERVICE.enabled: 
-                        self._WEB_SERVICE.disable()
-                    else:
-                        self._WEB_SERVICE.enable()
+            if new_state:
+                logger.info("Button 3 Pressed: Toggling web service", "Buttons")
+                if self._WEB_SERVICE.enabled: 
+                    self._WEB_SERVICE.disable()
+                else:
+                    self._WEB_SERVICE.enable()
             self._last_time_button3 = now
 
     def _button_4_callback(self, pin: Pin):
@@ -76,6 +75,6 @@ class Buttons:
         if time.ticks_diff(now, self._last_time_button4) > self._debounce_time_ms:
             new_state = pin.value() == 0
             if(new_state):
-                print("Button 4: Toggling nightlight")
+                logger.info("Button 4 Pressed: Toggling nightlight", "Buttons")
                 self._NIGHTLIGHT.on(not self._NIGHTLIGHT.is_on())
-                self._last_time_button4 = now
+            self._last_time_button4 = now

@@ -19,7 +19,6 @@ class Config:
         self.config_filepath = filepath
         self.network = NetworkSettings()
         self.clock = ClockSettings()
-        # Lock to serialise file writes
         self._save_lock = asyncio.Lock()
         self._load_config()
 

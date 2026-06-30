@@ -1,4 +1,5 @@
 import ujson as json
+from lib.model.log import logger
 
 class Timer:
     def __init__(self, tone=True, vibrate=False, audio=False, ramp=False,
@@ -65,7 +66,7 @@ class Timer:
             self._intervals = d.get("intervals", self._intervals)
             self._interval_index = 0
             self._interval = 5
-            print("Timer settings loaded from file.")
+            logger.info("Timer settings loaded from file.", "Timer")
         except:
             pass
 

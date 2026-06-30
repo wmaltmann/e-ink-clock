@@ -11,6 +11,7 @@ from lib.noise_player import NoisePlayer
 from lib.audio_player import AudioPlayer
 from lib.config import Config
 from lib.timer import Timer
+from lib.model.log import logger
 
 try:
     from typing import List
@@ -36,21 +37,24 @@ class Alarms:
         self._next_alarm = self._get_next_alarm()
         self.alarm_triggered = False
         self.timer_enabled = False
-        print(f"Alarm initialized. Enabled: {self.alarm_enabled}")
+        logger.info(f"Alarm initialized. Enabled: {self.alarm_enabled}", "Alarms")
 
     def _switch_changed(self, pin):
         now = time.ticks_ms()
-        if time.ticks_diff(now, self._last_time_switch) > 50:
+        if time.ticks_diff(now, self._last_time_switch) > 200:
             new_state = pin.value() == 0
             if self.alarm_enabled != new_state:
+                logger.info(f"Alarm switch changed. New state: {new_state}", "Alarms")
                 self.alarm_enabled = new_state
                 if self.alarm_enabled:
                     if(self.timer_enabled):    
                         self._next_alarm = self._get_timer_end(self._TIMER.get_interval())
                         self._DISPLAY_CONTEXT.update_timer(end_time=f"{self._next_alarm.hour_12}:{self._next_alarm.minute:02} {self._next_alarm.am_pm}")
+                        logger.info(f"Timer enabled", "Alarms")
                     else:
                         self._next_alarm = self._get_next_alarm()
                         self._DISPLAY_CONTEXT.update_alarm(self.alarm_enabled, self._next_alarm)
+                        logger.info(f"Next alarm enabled", "Alarms")
                     self._TONE_PLAYER.update_tone(self._next_alarm.frequency if self._next_alarm else 440,
                                                 300,
                                                 self._next_alarm.volume if self._next_alarm else 15,
@@ -63,6 +67,7 @@ class Alarms:
                         self._NOISE_PLAYER.update(volume_percent=self._CONFIG.clock.noise_volume)
                         self._NOISE_PLAYER.enable()
                 else:
+                    logger.info("Alarm disabled", "Alarms")
                     self.alarm_triggered = False
                     self.timer_enabled = False
                     self._TIMER.reset_interval()
@@ -77,17 +82,17 @@ class Alarms:
             with open(self._file_path, "r") as f:
                 data = ujson.load(f)
                 self._alarms = [Alarm(**a) for a in data]
-                print(f"Loaded {len(self._alarms)} alarms from file.")
+                logger.info(f"Loaded {len(self._alarms)} alarms from file.", "Alarms")
         except (OSError, ValueError):
-            print("No alarm file found or file corrupt. Starting with empty alarm list.")
+            logger.warn("No alarm file found or file corrupt. Starting with empty alarm list.", "Alarms")
 
     def save_alarms(self):
         try:
             with open(self._file_path, "w") as f:
                 ujson.dump([alarm.__dict__ for alarm in self._alarms], f)
-                print("Alarms saved.")
+                logger.info("Alarms saved.", "Alarms")
         except OSError as e:
-            print(f"Failed to save alarms: {e}")
+            logger.error(f"Failed to save alarms: {e}", "Alarms")
     
     def _get_next_alarm(self):
         now = self._CLOCK.get_time()
@@ -147,7 +152,7 @@ class Alarms:
     def _get_timer_end(self, duration_min: int):
         if duration_min <= 0:
             duration_min = 5
-            print("Timer duration must be greater than 0 min, setting to 5 min")
+            logger.warn("Timer duration must be greater than 0 min, setting to 5 min", "Alarms")
 
         now = self._CLOCK.get_time()
         total_minutes = now.hour_24 * 60 + now.minute + duration_min
@@ -232,10 +237,10 @@ class Alarms:
 
                 self.alarm_triggered = True
                 if self._next_alarm.tone:
-                    print("Enabling tone alarm")
+                    logger.info("Enabling tone alarm", "Alarms")
                     self._TONE_PLAYER.enable()
                 elif self._next_alarm.audio:
-                    print("Enabling audio alarm")
+                    logger.info("Enabling audio alarm", "Alarms")
                     self._AUDIO_PLAYER.enable()
 
     def toggle_timer(self):
