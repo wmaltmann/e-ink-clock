@@ -53,7 +53,6 @@ class DisplayContext:
         if self.time_hour_d1 != hour[0]:
             self.time_hour_d1 = hour[0]
             changed.add("time_hour_d1")
-            logger.info(f"Time hour digit 1 updated to: {self.time_hour_d1}", "DisplayContext")
         if self.time_hour_d2 != hour[1]:
             self.time_hour_d2 = hour[1]
             changed.add("time_hour_d2")
