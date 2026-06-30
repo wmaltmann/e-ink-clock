@@ -296,10 +296,22 @@ def get_timezone_list(cl):
     cl.send(response)
     cl.close()
 
-def get_log(cl, log_file: str = "/log.txt"):
+def get_log(cl, log_file: str = "/log.txt", tail: int = 50):
     try:
+        buf = [""] * tail
+        idx = 0
+        count = 0
         with open(log_file, "r") as f:
-            lines = [line.rstrip("\n") for line in f if line.strip()]
+            for line in f:
+                line = line.rstrip("\n")
+                if line:
+                    buf[idx] = line
+                    idx = (idx + 1) % tail
+                    count += 1
+        if count < tail:
+            lines = buf[:count]
+        else:
+            lines = buf[idx:] + buf[:idx]
         response = ujson.dumps({"lines": lines})
         cl.send("HTTP/1.1 200 OK\r\nContent-Type: application/json\r\n\r\n")
         cl.send(response)
