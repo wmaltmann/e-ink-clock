@@ -27,7 +27,7 @@ class Alarms:
         self._NOISE_PLAYER = NOISE_PLAYER
         self._pin = Pin(22, Pin.IN, Pin.PULL_UP)
         self.alarm_enabled = self._pin.value() == 0
-        self._last_time_switch = 0
+        self._last_time_switch = time.ticks_ms()
         self._pin.irq(trigger=Pin.IRQ_FALLING | Pin.IRQ_RISING, handler=self._switch_changed)
         self._CLOCK = CLOCK
         self._DISPLAY_CONTEXT = display_context
@@ -41,8 +41,13 @@ class Alarms:
 
     def _switch_changed(self, pin):
         now = time.ticks_ms()
-        if time.ticks_diff(now, self._last_time_switch) > 200:
-            new_state = pin.value() == 0
+        pin_val = pin.value()
+        logger.info(f"_switch_changed IRQ fired. pin={pin_val} alarm_enabled={self.alarm_enabled} ticks={now} last_ticks={self._last_time_switch}", "Alarms")
+        diff = time.ticks_diff(now, self._last_time_switch)
+        if diff > 200:
+            self._last_time_switch = now
+            new_state = pin_val == 0
+            logger.info(f"_switch_changed debounce passed (diff={diff}ms). new_state={new_state}", "Alarms")
             if self.alarm_enabled != new_state:
                 logger.info(f"Alarm switch changed. New state: {new_state}", "Alarms")
                 self.alarm_enabled = new_state
@@ -76,6 +81,10 @@ class Alarms:
                     self._AUDIO_PLAYER.disable()
                     self._DISPLAY_CONTEXT.update_timer(False, "", "")
                     self._DISPLAY_CONTEXT.update_alarm(False, None)
+            else:
+                logger.info(f"_switch_changed state unchanged ({new_state}), ignoring", "Alarms")
+        else:
+            logger.info(f"_switch_changed debounce filtered (diff={diff}ms)", "Alarms")
 
     def _load_alarms(self):
         try:
